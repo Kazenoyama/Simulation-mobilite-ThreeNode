@@ -2,6 +2,7 @@ import * as THREE from 'three'; //Import of three js
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'; //Import of the orbital camera
 
 import Table from '/src/js/table.js'; //Import of the Table class
+import Ant from '/src/js/ant.js'; //Import of the Ant class
 
 /**
  * Create the scene and set its background color 
@@ -47,23 +48,6 @@ controls.update();
 orbit.update();
 
 
-/**
- * Create the table and add it to the scene
- */
-const table = new Table();
-table.createTable();
-scene.add(table.getTable());
-
-
-// Add ambient light to the scene
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
-scene.add(ambientLight);
-
-// Add directional light to the scene
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // White light
-directionalLight.position.set(0, 1, 1).normalize();
-scene.add(directionalLight);
-
 //Create a fix camera
 const camera2 = new THREE.PerspectiveCamera( 
     75, 
@@ -76,7 +60,31 @@ camera2.position.set(0, 50,0);
 camera2.lookAt(0,0,0);
 
 ////////////////////////////////////////
-/////////// TEST ZONE //////////////////
+/////////// TABLE //////////////////////
+
+/**
+ * Create the table and add it to the scene
+ */
+const table = new Table();
+table.createTable();
+scene.add(table.getTable());
+
+
+////////////////////////////////////////
+/////////// LIGHT //////////////////////
+
+// Add ambient light to the scene
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
+scene.add(ambientLight);
+
+// Add directional light to the scene
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // White light
+directionalLight.position.set(0, 1, 1).normalize();
+scene.add(directionalLight);
+
+////////////////////////////////////////
+/////////// DRAWING ////////////////////
+
 
 var drawing = false;
 var canDraw = true;
@@ -86,20 +94,23 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
 function onMousePressed(event){
-    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-    pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(pointer, activeCamera);
+    if(canDraw == true){
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, activeCamera);
 
-    const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
-    console.log(intersects);
+        const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
+        console.log(intersects);
 
-    if(intersects.length >= 0 && canDraw == true){
-        if(canDraw == true){
-        drawing = true;}
-        console.log("Mouse pressed");
-        listePoint.push(intersects[0].point);
-        console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+        if(intersects.length >= 0 && canDraw == true){
+            
+            drawing = true;
+            console.log("Mouse pressed");
+            listePoint.push(intersects[0].point);
+            console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+        }
     }
+    else console.log("Can't draw")
 }
 
 function onMouseDragged(event){
@@ -120,6 +131,11 @@ function onMouseReleased(event){
     console.log("Mouse released")
     drawing = false;
     canDraw = false;
+    window.removeEventListener('mousedown', onMousePressed);
+    window.removeEventListener('mousemove', onMouseDragged);
+    window.removeEventListener('mouseup', onMouseReleased);
+    console.log(listePoint[0].x)
+    
 }
 
 function drawline(){
@@ -139,25 +155,65 @@ function drawline(){
 
 }
 
-window.addEventListener('mousedown', onMousePressed);
-window.addEventListener('mousemove', onMouseDragged);
-window.addEventListener('mouseup', onMouseReleased);
+////////////////////////////////////////
+/////////// TEST ZONE //////////////////
+
+var x = 0;
+var y = 11;
+var z = 0;
+var ant = new Ant(x,y,z);
+var antMesh = ant.createAnt();
+var speedAnt = 0.25;
+
+console.log(antMesh)
+scene.add(antMesh);
+
+function followN(x,y,z) {
+    var dx = x - antMesh.position.x;
+    var dy = y - antMesh.position.y;
+    var dz = z - antMesh.position.z;
+    var speedX;
+    var speedY;
+    var speedZ;
+    if (Math.max(Math.max(Math.abs(dx), Math.abs(dy), dz)) >= speedAnt) {
+        speedX = dx / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
+        speedY = dy / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
+        speedZ = dz / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
+
+    }
+    else {
+        speedX = dx;
+        speedY = dy;
+        speedZ = dz;
+    }
+    antMesh.position.x += speedX;
+    antMesh.position.y += speedY;
+    antMesh.position.z += speedZ;
+};
+
+
+
+
+
 
 
 ///////////////////////////////////////
 
-function animate(time){
-    raycaster.setFromCamera(pointer, activeCamera);
-    renderer.render(scene, activeCamera);
-}
 
+////////////////////////////////////////
+//////// ANIMATION AND LISTENER ////////
+
+window.addEventListener('mousedown', onMousePressed);
+window.addEventListener('mousemove', onMouseDragged);
+window.addEventListener('mouseup', onMouseReleased);
 
 window.addEventListener('keydown', (event) => {
     // Check if the 'w' or 'W' key was pressed
     if (event.key === 'KeyW' || event.key === 'w') {
         // Set the active camera to camera
         activeCamera = camera;
-        camera.position.set(0, 40,100);
+        camera.position.set(0, 50,100);
+        controls.target(0,0,0);
     }
     // Check if the 's' or 'S' key was pressed
     if (event.key === 'KeyS' || event.key === 's') {
@@ -165,6 +221,19 @@ window.addEventListener('keydown', (event) => {
         activeCamera = camera2;
     }
 });
+
+
+function animate(time){
+    raycaster.setFromCamera(pointer, activeCamera);
+    //antMesh.position.set(x, y, z);
+    if(canDraw == false && drawing == false && listePoint.length > 0){
+        followN(listePoint[0].x, 0, listePoint[0].z);
+        if(antMesh.position.x == listePoint[0].x &&  antMesh.position.z == listePoint[0].z){
+            listePoint.shift();
+        }
+    };
+    renderer.render(scene, activeCamera);
+}
 
 renderer.setAnimationLoop(animate);
 
