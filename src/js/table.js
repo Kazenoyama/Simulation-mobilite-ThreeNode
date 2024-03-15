@@ -8,19 +8,27 @@ class Table {
     this.size = {height : 50, width : 50, depth : 100};
   }
 
+  /**
+   * Create the table
+   * Create each part of the table to add them to a same group. It will be easier to move the table.
+   * @returns {THREE.Group} The table
+   * @memberof Table
+   */
 createTable() {
     //Create the plane where we will put the objects
     const table = new THREE.PlaneGeometry(this.size.width, this.size.height);
-    const tableMaterial = new THREE.MeshStandardMaterial({ color: 'grey', side : THREE.DoubleSide});
+    const tableMaterial = new THREE.MeshStandardMaterial({ color: 'white', side: THREE.DoubleSide});
     const tableMesh = new THREE.Mesh(table, tableMaterial);
     tableMesh.rotation.x = Math.PI / 2;
     tableMesh.position.set(0, 10, 0);
+    tableMesh.name = "table";
     this.tableElement.add(tableMesh);
 
     const box = new THREE.BoxGeometry(this.size.width, 1, this.size.height);
     const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
     const boxMesh = new THREE.Mesh(box, boxMaterial);
     boxMesh.position.set(0, 0, 0);
+    boxMesh.name = "box";
     this.tableElement.add(boxMesh);
 
     //Create each poll to support the table
