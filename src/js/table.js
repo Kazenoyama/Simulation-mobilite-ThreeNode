@@ -3,9 +3,11 @@ import { Color } from 'three';
 import { Plane } from 'three';
 
 class Table {
-  constructor() {
+  constructor(h,w,d) {
     this.tableElement = new THREE.Group();
-    this.size = {height : 50, width : 50, depth : 100};
+    this.size = {height : h, width : w, depth : d};
+
+    this.createTable();
   }
 
   /**

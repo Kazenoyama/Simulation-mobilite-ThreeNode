@@ -65,8 +65,7 @@ camera2.lookAt(0,0,0);
 /**
  * Create the table and add it to the scene
  */
-const table = new Table();
-table.createTable();
+const table = new Table(50,50,100);
 scene.add(table.getTable());
 
 
@@ -129,20 +128,27 @@ function onMouseDragged(event){
 
 function onMouseReleased(event){
     console.log("Mouse released")
-    drawing = false;
-    canDraw = false;
-
-    //Remove the event listener
-    window.removeEventListener('mousedown', onMousePressed);
-    window.removeEventListener('mousemove', onMouseDragged);
-    window.removeEventListener('mouseup', onMouseReleased);
-
-    //Init the ant and the first point
-    start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
-    finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
-    Firstant = new Ant(start.x,start.y,start.z);
-    listeAnt.push(Firstant);
-    scene.add(Firstant.body);
+    if(listePoint.length < 15){
+        console.log("Not enough points");
+        listePoint = [];
+    }
+    else{
+        drawing = false;
+        canDraw = false;
+    
+        //Remove the event listener
+        window.removeEventListener('mousedown', onMousePressed);
+        window.removeEventListener('mousemove', onMouseDragged);
+        window.removeEventListener('mouseup', onMouseReleased);
+    
+        //Init the ant and the first point
+        start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
+        finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
+        Firstant = new Ant(start.x,start.y,start.z);
+        listeAnt.push(Firstant);
+        scene.add(Firstant.body);
+    }
+    
     
 }
 
@@ -155,50 +161,78 @@ function drawline(){
         var geometry = new THREE.BufferGeometry().setFromPoints(points);
         var line = new THREE.Line(geometry, material);
         scene.add(line);
-
-        //var geometry = new THREE.BufferGeometry().setFromPoints(listePoint);
-        //var line = new THREE.Line(geometry, material);
-        scene.add(line);
     }
 
 }
 
-////////////////////////////////////////
-/////////// TEST ZONE //////////////////
+///////////////////////////////////////
+/////////// ANTS //////////////////////
 var Firstant;
 var start;
 var finish;
+var counter = 0;
+var intervalleDrawingAnt = 4;
 
 var listeAnt = [];
 function addAnt(){
-    console.log("Add ant");
+    //console.log("Add ant");
     if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
         listeAnt.push(new Ant(start.x,start.y,start.z));
         scene.add(listeAnt[listeAnt.length-1].body);
+        counter++;
+        if(counter%intervalleDrawingAnt == 0){
+            listeAnt[listeAnt.length-1].drawingAnt = true;
+            listeAnt[listeAnt.length-1].body.material.color.setHex(0x0000ff);
+        }
     }
 
-    console.log(listeAnt[0].distance(finish.x,finish.y,finish.z));
     if(listeAnt[0].distance(finish.x,finish.y,finish.z) < 0.1){
-      console.log("Finished");
+ 
       if(listeAnt.length > 1){
-        console.log(listeAnt[1].minDistanceToAnt);
         listeAnt[1].minDistanceToAnt = 0;
 
         if(listeAnt[1].distance(finish.x,finish.y,finish.z) < 0.1){
-          console.log("Finished");
           listeAnt.shift();
         }
       }
     }
 }
 
+////////////////////////////////////////
+/////////// TEST ZONE //////////////////
+
+function movingAnt(){
+
+    if(canDraw == false && drawing == false && listePoint.length > 0){
+        addAnt();
+        Firstant.followN(listePoint[0].x, listePoint[0].y, listePoint[0].z);
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+                listeAnt[i-1].traceLine(scene);
+            }
+        }
+        if(Firstant.pos.x == listePoint[0].x && Firstant.pos.y == listePoint[0].y && Firstant.pos.z == listePoint[0].z){
+            listePoint.shift();
+        }
+    };
+
+    if(listePoint.length == 0 && canDraw == false){
+        addAnt();
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+                listeAnt[i-1].traceLine(scene);
+            }
+        }
+    }
+
+}
 
 
 
 
 
-///////////////////////////////////////
-/////////// ANTS //////////////////////
 
 ////////////////////////////////////////
 //////// ANIMATION AND LISTENER ////////
@@ -225,28 +259,7 @@ window.addEventListener('keydown', (event) => {
 
 function animate(time){
     raycaster.setFromCamera(pointer, activeCamera);
-    if(canDraw == false && drawing == false && listePoint.length > 0){
-        addAnt();
-        Firstant.followN(listePoint[0].x, listePoint[0].y, listePoint[0].z);
-        if(listeAnt.length > 1){
-            for(var i = 1; i < listeAnt.length; i++){
-                listeAnt[i].followPrevious(listeAnt[i-1]);
-            }
-        }
-        if(Firstant.pos.x == listePoint[0].x && Firstant.pos.y == listePoint[0].y && Firstant.pos.z == listePoint[0].z){
-            listePoint.shift();
-        }
-    };
-    
-
-    if(listePoint.length == 0 && canDraw == false){
-        addAnt();
-        if(listeAnt.length > 1){
-            for(var i = 1; i < listeAnt.length; i++){
-                listeAnt[i].followPrevious(listeAnt[i-1]);
-            }
-        }
-    }
+    movingAnt();
     
     renderer.render(scene, activeCamera);
 }

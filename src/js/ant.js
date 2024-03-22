@@ -5,6 +5,11 @@ class  Ant {
         this.speed = 0.25;
         this.body;
         this.minDistanceToAnt = 6;
+        this.drawingAnt = false;
+        this.point = [];
+        this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
+
+        this.color = this.randomColor();
 
         this.createAnt();
     }
@@ -37,7 +42,7 @@ class  Ant {
      * @param {z axis} z 
      */
     followN(x,y,z){
-        console.log("FollowN")
+        //console.log("FollowN")
         var dx = x - this.pos.x;
         var dy = y - this.pos.y;
         var dz = z - this.pos.z;
@@ -71,6 +76,7 @@ class  Ant {
         return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
+    //Follow the previous ant
     followPrevious(ant) {
         //console.log("FollowPrevious")
         var dx = ant.pos.x - this.pos.x;
@@ -103,7 +109,34 @@ class  Ant {
         this.body.position.x = this.pos.x;
         this.body.position.y = this.pos.y + this.body.geometry.parameters.height / 2 + 0.1;
         this.body.position.z = this.pos.z;
+
+        if (this.drawingAnt) {
+            //console.log("Drawing ant")
+            this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
+        }
     }
+
+    traceLine(scene){
+        
+        if (this.point.length > 1){
+            const material = new THREE.LineBasicMaterial( { color: this.color, linewidth: 1, linejoin: 'round'} );
+            const geometry = new THREE.BufferGeometry().setFromPoints( this.point );
+            const line = new THREE.Line( geometry, material );
+            scene.add( line );
+
+        }
+
+    }
+
+    randomColor(){
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++){
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
 }
 
 export default Ant;
