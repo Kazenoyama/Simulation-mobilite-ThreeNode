@@ -1,12 +1,15 @@
 import * as THREE from 'three'; //Import of three js
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js'; //Import of the orbital camera
+
 class  Ant {
-    constructor(x,y,z) {
+    constructor(x,y,z, number) {
         this.pos = {x:x, y:y, z:z};
         this.speed = 0.25;
         this.body;
         this.minDistanceToAnt = 6;
         this.drawingAnt = false;
         this.point = [];
+        this.number = number;
         this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
 
         this.color = this.randomColor();
@@ -28,10 +31,14 @@ class  Ant {
     }
 
     createBody(){
+        
+
+        
         const body = new THREE.BoxGeometry(2, 2, 2);
         const bodyMaterial = new THREE.MeshStandardMaterial({ color: "green" });
         const bodyMesh = new THREE.Mesh(body, bodyMaterial);
         bodyMesh.position.set(this.pos.x, this.pos.y, this.pos.z);
+        bodyMesh.name = "ant" + this.number;
         return bodyMesh;
     }
 

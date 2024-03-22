@@ -144,7 +144,7 @@ function onMouseReleased(event){
         //Init the ant and the first point
         start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
         finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
-        Firstant = new Ant(start.x,start.y,start.z);
+        Firstant = new Ant(start.x,start.y,start.z, counter);
         listeAnt.push(Firstant);
         scene.add(Firstant.body);
     }
@@ -177,7 +177,7 @@ var listeAnt = [];
 function addAnt(){
     //console.log("Add ant");
     if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
-        listeAnt.push(new Ant(start.x,start.y,start.z));
+        listeAnt.push(new Ant(start.x,start.y,start.z,counter));
         scene.add(listeAnt[listeAnt.length-1].body);
         counter++;
         if(counter%intervalleDrawingAnt == 0){
@@ -185,6 +185,7 @@ function addAnt(){
             listeAnt[listeAnt.length-1].body.material.color.setHex(0x0000ff);
         }
     }
+    
 
     if(listeAnt[0].distance(finish.x,finish.y,finish.z) < 0.1){
  
@@ -192,14 +193,13 @@ function addAnt(){
         listeAnt[1].minDistanceToAnt = 0;
 
         if(listeAnt[1].distance(finish.x,finish.y,finish.z) < 0.1){
-          listeAnt.shift();
+            //console.log(scene.getObjectByName("ant0"));
+            scene.remove(scene.getObjectByName(listeAnt[0].body.name));
+            listeAnt.shift();
         }
       }
     }
 }
-
-////////////////////////////////////////
-/////////// TEST ZONE //////////////////
 
 function movingAnt(){
 
@@ -229,6 +229,24 @@ function movingAnt(){
 
 }
 
+
+////////////////////////////////////////
+/////////// TEST ZONE //////////////////
+
+
+/*
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+const loader = new GLTFLoader();
+loader.load('/src/modele/ant/ant/scene.gltf', function(gltf){
+    scene.add(gltf.scene);
+    gltf.scene.scale.set(0.01,0.01,0.01);
+    gltf.scene.position.set(0,10.2,0);
+}, undefined, function(error){
+    console.error(error);
+
+}
+);
+*/
 
 
 
@@ -262,6 +280,7 @@ function animate(time){
     movingAnt();
     
     renderer.render(scene, activeCamera);
+    //console.log(scene.children.length);
 }
 
 renderer.setAnimationLoop(animate);
