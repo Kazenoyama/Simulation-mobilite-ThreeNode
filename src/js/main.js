@@ -100,14 +100,14 @@ function onMousePressed(event){
         raycaster.setFromCamera(pointer, activeCamera);
 
         const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
-        console.log(intersects);
+        //console.log(intersects);
 
         if(intersects.length >= 0 && canDraw == true){
             
             drawing = true;
             console.log("Mouse pressed");
             listePoint.push(intersects[0].point);
-            console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+            //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
         }
     }
     else console.log("Can't draw")
@@ -121,7 +121,7 @@ function onMouseDragged(event){
         const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
         if(intersects.length > 0){
             listePoint.push(intersects[0].point);
-            console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+            //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
             drawline();
         }
     }
@@ -131,10 +131,18 @@ function onMouseReleased(event){
     console.log("Mouse released")
     drawing = false;
     canDraw = false;
+
+    //Remove the event listener
     window.removeEventListener('mousedown', onMousePressed);
     window.removeEventListener('mousemove', onMouseDragged);
     window.removeEventListener('mouseup', onMouseReleased);
-    console.log(listePoint[0].x)
+
+    //Init the ant and the first point
+    start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
+    finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
+    Firstant = new Ant(start.x,start.y,start.z);
+    listeAnt.push(Firstant);
+    scene.add(Firstant.body);
     
 }
 
@@ -157,40 +165,32 @@ function drawline(){
 
 ////////////////////////////////////////
 /////////// TEST ZONE //////////////////
+var Firstant;
+var start;
+var finish;
 
-var x = 0;
-var y = 11;
-var z = 0;
-var ant = new Ant(x,y,z);
-var antMesh = ant.createAnt();
-var speedAnt = 0.25;
-
-console.log(antMesh)
-scene.add(antMesh);
-
-function followN(x,y,z) {
-    var dx = x - antMesh.position.x;
-    var dy = y - antMesh.position.y;
-    var dz = z - antMesh.position.z;
-    var speedX;
-    var speedY;
-    var speedZ;
-    if (Math.max(Math.max(Math.abs(dx), Math.abs(dy), dz)) >= speedAnt) {
-        speedX = dx / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
-        speedY = dy / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
-        speedZ = dz / Math.max(Math.abs(dx), Math.abs(dy)) * speedAnt;
-
+var listeAnt = [];
+function addAnt(){
+    console.log("Add ant");
+    if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
+        listeAnt.push(new Ant(start.x,start.y,start.z));
+        scene.add(listeAnt[listeAnt.length-1].body);
     }
-    else {
-        speedX = dx;
-        speedY = dy;
-        speedZ = dz;
-    }
-    antMesh.position.x += speedX;
-    antMesh.position.y += speedY;
-    antMesh.position.z += speedZ;
-};
 
+    console.log(listeAnt[0].distance(finish.x,finish.y,finish.z));
+    if(listeAnt[0].distance(finish.x,finish.y,finish.z) < 0.1){
+      console.log("Finished");
+      if(listeAnt.length > 1){
+        console.log(listeAnt[1].minDistanceToAnt);
+        listeAnt[1].minDistanceToAnt = 0;
+
+        if(listeAnt[1].distance(finish.x,finish.y,finish.z) < 0.1){
+          console.log("Finished");
+          listeAnt.shift();
+        }
+      }
+    }
+}
 
 
 
@@ -198,7 +198,7 @@ function followN(x,y,z) {
 
 
 ///////////////////////////////////////
-
+/////////// ANTS //////////////////////
 
 ////////////////////////////////////////
 //////// ANIMATION AND LISTENER ////////
@@ -225,13 +225,29 @@ window.addEventListener('keydown', (event) => {
 
 function animate(time){
     raycaster.setFromCamera(pointer, activeCamera);
-    //antMesh.position.set(x, y, z);
     if(canDraw == false && drawing == false && listePoint.length > 0){
-        followN(listePoint[0].x, 0, listePoint[0].z);
-        if(antMesh.position.x == listePoint[0].x &&  antMesh.position.z == listePoint[0].z){
+        addAnt();
+        Firstant.followN(listePoint[0].x, listePoint[0].y, listePoint[0].z);
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+            }
+        }
+        if(Firstant.pos.x == listePoint[0].x && Firstant.pos.y == listePoint[0].y && Firstant.pos.z == listePoint[0].z){
             listePoint.shift();
         }
     };
+    
+
+    if(listePoint.length == 0 && canDraw == false){
+        addAnt();
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+            }
+        }
+    }
+    
     renderer.render(scene, activeCamera);
 }
 
