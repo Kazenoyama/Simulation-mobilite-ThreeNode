@@ -13,6 +13,7 @@ class  Ant {
         this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
 
         this.color = this.randomColor();
+        this.path = '/src/modele/ant/ant/scene.gltf'
 
         this.createAnt();
     }
@@ -31,10 +32,7 @@ class  Ant {
     }
 
     createBody(){
-        
-
-        
-        const body = new THREE.BoxGeometry(2, 2, 2);
+        const body = new THREE.BoxGeometry(0.01, 0.01, 0.01);
         const bodyMaterial = new THREE.MeshStandardMaterial({ color: "green" });
         const bodyMesh = new THREE.Mesh(body, bodyMaterial);
         bodyMesh.position.set(this.pos.x, this.pos.y, this.pos.z);

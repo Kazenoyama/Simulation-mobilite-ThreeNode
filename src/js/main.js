@@ -1,5 +1,6 @@
 import * as THREE from 'three'; //Import of three js
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'; //Import of the orbital camera
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import Table from '/src/js/table.js'; //Import of the Table class
 import Ant from '/src/js/ant.js'; //Import of the Ant class
@@ -145,6 +146,8 @@ function onMouseReleased(event){
         start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
         finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
         Firstant = new Ant(start.x,start.y,start.z, counter);
+        attach3DModel(counter);
+        counter++;
         listeAnt.push(Firstant);
         scene.add(Firstant.body);
     }
@@ -179,10 +182,13 @@ function addAnt(){
     if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
         listeAnt.push(new Ant(start.x,start.y,start.z,counter));
         scene.add(listeAnt[listeAnt.length-1].body);
+        attach3DModel(counter);
         counter++;
         if(counter%intervalleDrawingAnt == 0){
             listeAnt[listeAnt.length-1].drawingAnt = true;
             listeAnt[listeAnt.length-1].body.material.color.setHex(0x0000ff);
+            attach3DModel(counter);
+            counter++;
         }
     }
     
@@ -210,6 +216,7 @@ function movingAnt(){
             for(var i = 1; i < listeAnt.length; i++){
                 listeAnt[i].followPrevious(listeAnt[i-1]);
                 listeAnt[i-1].traceLine(scene);
+                
             }
         }
         if(Firstant.pos.x == listePoint[0].x && Firstant.pos.y == listePoint[0].y && Firstant.pos.z == listePoint[0].z){
@@ -223,6 +230,13 @@ function movingAnt(){
             for(var i = 1; i < listeAnt.length; i++){
                 listeAnt[i].followPrevious(listeAnt[i-1]);
                 listeAnt[i-1].traceLine(scene);
+                if(listeAnt[i].distance(finish.x,finish.y,finish.z) < 0.1){
+                    removeAnt(i);
+                    /*
+                    scene.remove(scene.getObjectByName(listeAnt[i].body.name));
+                    listeAnt.splice(i,1);
+                    */
+                }
             }
         }
     }
@@ -233,20 +247,60 @@ function movingAnt(){
 ////////////////////////////////////////
 /////////// TEST ZONE //////////////////
 
+var model;
+var tailleModel = 0.015;
 
-/*
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-const loader = new GLTFLoader();
-loader.load('/src/modele/ant/ant/scene.gltf', function(gltf){
-    scene.add(gltf.scene);
-    gltf.scene.scale.set(0.01,0.01,0.01);
-    gltf.scene.position.set(0,10.2,0);
-}, undefined, function(error){
-    console.error(error);
+function attach3DModel(counterT){
+    if(/*counter <= 0 && */model == undefined){
+        console.log("hellox")
+        const loader = new GLTFLoader();
+        loader.load('/src/modele/ant/ant/scene.gltf', function(bod){
+            bod.scene.scale.set(tailleModel,tailleModel,tailleModel);
+            bod.scene.position.set(start.x,start.y,start.z);
+            bod.scene.name = "ant3D" + counterT;
+            model = bod.scene;
+            scene.add(bod.scene);
+            
+            //console.log(bod);
+        });
+    }
+    else{
+        const cloneModel = model.clone();
+        cloneModel.scale.set(tailleModel,tailleModel,tailleModel);
+        cloneModel.position.set(start.x,start.y,start.z);
+        cloneModel.name = "ant3D" + counterT;
+        scene.add(cloneModel);
+
+    }
 
 }
-);
-*/
+
+function move3DModel(){
+    if(scene.getObjectByName("ant3D0") != undefined){
+        scene.getObjectByName("ant3D0").position.set(Firstant.pos.x, Firstant.pos.y+0.5, Firstant.pos.z);
+
+    }
+    
+    for(var i = 0; i < listeAnt.length; i++){
+        if(scene.getObjectByName("ant3D" + listeAnt[i].number) != undefined){
+            scene.getObjectByName("ant3D" + listeAnt[i].number).position.set(listeAnt[i].pos.x, listeAnt[i].pos.y+0.5, listeAnt[i].pos.z);
+        }
+        /*
+        if(i = 0 && scene.getObjectByName("ant3D" + listeAnt[i].number-1) != undefined){
+            scene.getObjectByName("ant3D" + listeAnt[i].number-1).dispose();
+        }*/
+    }
+}
+
+function removeAnt(toRemove){
+    scene.remove(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
+    scene.remove(scene.getObjectByName(listeAnt[toRemove].body.name));
+    console.log("Remove ant");
+    console.log(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
+    console.log(scene.getObjectByName(listeAnt[toRemove].body.name));
+}
+
+
 
 
 
@@ -265,7 +319,6 @@ window.addEventListener('keydown', (event) => {
         // Set the active camera to camera
         activeCamera = camera;
         camera.position.set(0, 50,100);
-        controls.target(0,0,0);
     }
     // Check if the 's' or 'S' key was pressed
     if (event.key === 'KeyS' || event.key === 's') {
@@ -278,6 +331,10 @@ window.addEventListener('keydown', (event) => {
 function animate(time){
     raycaster.setFromCamera(pointer, activeCamera);
     movingAnt();
+    move3DModel();
+    /*
+    if(scene.getObjectByName("ant3D") != undefined && Firstant != undefined){
+        scene.getObjectByName("ant3D").position.set(Firstant.pos.x, Firstant.pos.y, Firstant.pos.z);}*/
     
     renderer.render(scene, activeCamera);
     //console.log(scene.children.length);
