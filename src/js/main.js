@@ -59,6 +59,14 @@ const camera2 = new THREE.PerspectiveCamera(
 var activeCamera = camera2;
 camera2.position.set(0, 50,0);
 camera2.lookAt(0,0,0);
+/*
+function splitScreen(){
+    // Rendu de la grande vue de l'objet (active)
+    renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+    renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
+    renderer.setScissorTest(true);
+    renderer.render(scene, camera2);
+}*/
 
 ////////////////////////////////////////
 /////////// TABLE //////////////////////
@@ -136,6 +144,8 @@ function onMouseReleased(event){
     else{
         drawing = false;
         canDraw = false;
+        activeCamera = camera;
+        camera.position.set(0, 50,100);
     
         //Remove the event listener
         window.removeEventListener('mousedown', onMousePressed);
@@ -210,6 +220,9 @@ function onReleased(event){
     else{
         drawing = false;
         canDraw = false;
+        activeCamera = camera;
+        camera.position.set(0, 15,35);
+        camera.lookAt(0,10.5,0);
     
         //Remove the event listener
         window.removeEventListener('mousedown', onMousePressed);
@@ -230,8 +243,6 @@ function onReleased(event){
     }
 
 }
-
-
 
 function drawline(){
     if(listePoint.length > 1){
@@ -372,12 +383,6 @@ function loadNest(loader){
     });
 }
 
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////// TEST ZONE //////////////////
-
 function move3DModel(){
     for(var i = 0; i < listeAnt.length; i++){
         if(scene.getObjectByName("ant3D" + listeAnt[i].number) != undefined){
@@ -399,32 +404,15 @@ function move3DModel(){
     }
 }
 
-// A tester et faire fonctionner
-
 function rotateModel3D(theModel, direction){
-    /*
-    var target = new THREE.Vector3().subVectors(direction, theModel.position);
-    target.normalize();
-    var vec = Math.atan2(target.x, target.z)
-    theModel.rotation.y = vec - (360/Math.PI);*/
-
-    // Calculate the vector from the model's position to the direction
     const lookAtVector = new THREE.Vector3().copy(direction).sub(theModel.position);
-
-    // Calculate the rotation quaternion to look at the specified direction
     theModel.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0), lookAtVector.clone().normalize());
-
-    // Optionally, you can rotate the model around its up axis (y-axis) to align it properly
     theModel.rotateY(Math.PI);
-
-    // Update the model's rotation
     theModel.updateMatrixWorld(true);
 }
 
-//Load a 3D model
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////// TEST ZONE //////////////////
 
 
 
@@ -455,6 +443,10 @@ window.addEventListener('keydown', (event) => {
         // Set the active camera to camera2
         activeCamera = camera2;
     }
+
+    if(event.key === 'KeyR' || event.key === 'r'){
+        window.location.reload();
+    }
 });
 
 
@@ -465,14 +457,9 @@ function animate(time){
     movingAnt();
     move3DModel();
 
-    
-    /*
-    if(scene.getObjectByName("ant3D") != undefined && Firstant != undefined){
-        scene.getObjectByName("ant3D").position.set(Firstant.pos.x, Firstant.pos.y, Firstant.pos.z);}*/
-    
+    //splitScreen();
+
     renderer.render(scene, activeCamera);
-    //console.log(scene.children.length);
-    
 }
 
 let fpsCounter = 0;
@@ -485,7 +472,6 @@ function updateFPS(){
     lastcheck = currentcheck;
     const fps = 1000 / elapsed;
     fpsdisplay.textContent = fps.toFixed(1);
-
     //console.log(fps);
 
 }
