@@ -351,8 +351,6 @@ function attach3DModel(counterT){
 
 }
 
-
-
 function removeAnt(toRemove){
     scene.remove(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
     scene.remove(scene.getObjectByName(listeAnt[toRemove].body.name));
@@ -360,6 +358,18 @@ function removeAnt(toRemove){
     console.log("Remove ant");
     console.log(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
     console.log(scene.getObjectByName(listeAnt[toRemove].body.name));*/
+}
+
+function loadNest(loader){
+    console.log("Load nest")
+    loader.load('/src/modele/nest/raptor_nest/scene.gltf', function(bod){
+        bod.scene.scale.set(3,3,3);
+        bod.scene.position.set(start.x,start.y,start.z);
+        bod.scene.name = "Nest";
+        model = bod.scene;
+        scene.add(bod.scene);
+        //console.log(scene)
+    });
 }
 
 
@@ -378,7 +388,8 @@ function move3DModel(){
             }
             else{
                 if(listePoint.length > 0){
-                    rotateModel3D(antUsed, listePoint[0]);
+                    var target = new THREE.Vector3(listePoint[0].x, listePoint[0].y +0.5, listePoint[0].z);
+                    rotateModel3D(antUsed, target);
                 }
                 
             }
@@ -391,32 +402,28 @@ function move3DModel(){
 // A tester et faire fonctionner
 
 function rotateModel3D(theModel, direction){
+    /*
     var target = new THREE.Vector3().subVectors(direction, theModel.position);
     target.normalize();
     var vec = Math.atan2(target.x, target.z)
-    theModel.rotation.y = vec + Math.PI/2;
+    theModel.rotation.y = vec - (360/Math.PI);*/
 
+    // Calculate the vector from the model's position to the direction
+    const lookAtVector = new THREE.Vector3().copy(direction).sub(theModel.position);
 
+    // Calculate the rotation quaternion to look at the specified direction
+    theModel.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0), lookAtVector.clone().normalize());
 
-    //theModel.lookAt(target);
-    //target.set(direction.x, direction.y, direction.z);
+    // Optionally, you can rotate the model around its up axis (y-axis) to align it properly
+    theModel.rotateY(Math.PI);
 
-
+    // Update the model's rotation
+    theModel.updateMatrixWorld(true);
 }
 
 //Load a 3D model
 
-function loadNest(loader){
-    console.log("Load nest")
-    loader.load('/src/modele/nest/raptor_nest/scene.gltf', function(bod){
-        bod.scene.scale.set(3,3,3);
-        bod.scene.position.set(start.x,start.y,start.z);
-        bod.scene.name = "Nest";
-        model = bod.scene;
-        scene.add(bod.scene);
-        console.log(scene)
-    });
-}
+
 
 
 
@@ -452,9 +459,12 @@ window.addEventListener('keydown', (event) => {
 
 
 function animate(time){
+    requestAnimationFrame(animate);
     raycaster.setFromCamera(pointer, activeCamera);
+    updateFPS();
     movingAnt();
     move3DModel();
+
     
     /*
     if(scene.getObjectByName("ant3D") != undefined && Firstant != undefined){
@@ -462,7 +472,23 @@ function animate(time){
     
     renderer.render(scene, activeCamera);
     //console.log(scene.children.length);
+    
 }
 
-renderer.setAnimationLoop(animate);
+let fpsCounter = 0;
+let lastcheck = performance.now();
+const fpsdisplay = document.getElementById('fps');
+
+function updateFPS(){
+    const currentcheck = performance.now();
+    const elapsed = currentcheck - lastcheck;
+    lastcheck = currentcheck;
+    const fps = 1000 / elapsed;
+    fpsdisplay.textContent = fps.toFixed(1);
+
+    //console.log(fps);
+
+}
+
+requestAnimationFrame(animate);
 
