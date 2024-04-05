@@ -180,16 +180,15 @@ var listeAnt = [];
 function addAnt(){
     //console.log("Add ant");
     if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
+        
         listeAnt.push(new Ant(start.x,start.y,start.z,counter));
-        scene.add(listeAnt[listeAnt.length-1].body);
         attach3DModel(counter);
         counter++;
         if(counter%intervalleDrawingAnt == 0){
             listeAnt[listeAnt.length-1].drawingAnt = true;
             listeAnt[listeAnt.length-1].body.material.color.setHex(0x0000ff);
-            attach3DModel(counter);
-            counter++;
         }
+        scene.add(listeAnt[listeAnt.length-1].body);
     }
     
 
@@ -243,16 +242,13 @@ function movingAnt(){
 
 }
 
-
 ////////////////////////////////////////
-/////////// TEST ZONE //////////////////
-
+/////////// 3D MODELS //////////////////
 var model;
 var tailleModel = 0.015;
 
 function attach3DModel(counterT){
-    if(/*counter <= 0 && */model == undefined){
-        console.log("hellox")
+    if(model == undefined){
         const loader = new GLTFLoader();
         loader.load('/src/modele/ant/ant/scene.gltf', function(bod){
             bod.scene.scale.set(tailleModel,tailleModel,tailleModel);
@@ -275,29 +271,53 @@ function attach3DModel(counterT){
 
 }
 
-function move3DModel(){
-    if(scene.getObjectByName("ant3D0") != undefined){
-        scene.getObjectByName("ant3D0").position.set(Firstant.pos.x, Firstant.pos.y+0.5, Firstant.pos.z);
 
-    }
-    
-    for(var i = 0; i < listeAnt.length; i++){
-        if(scene.getObjectByName("ant3D" + listeAnt[i].number) != undefined){
-            scene.getObjectByName("ant3D" + listeAnt[i].number).position.set(listeAnt[i].pos.x, listeAnt[i].pos.y+0.5, listeAnt[i].pos.z);
-        }
-        /*
-        if(i = 0 && scene.getObjectByName("ant3D" + listeAnt[i].number-1) != undefined){
-            scene.getObjectByName("ant3D" + listeAnt[i].number-1).dispose();
-        }*/
-    }
-}
 
 function removeAnt(toRemove){
     scene.remove(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
     scene.remove(scene.getObjectByName(listeAnt[toRemove].body.name));
+    /*
     console.log("Remove ant");
     console.log(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
-    console.log(scene.getObjectByName(listeAnt[toRemove].body.name));
+    console.log(scene.getObjectByName(listeAnt[toRemove].body.name));*/
+}
+
+
+////////////////////////////////////////
+/////////// TEST ZONE //////////////////
+
+function move3DModel(){
+    for(var i = 0; i < listeAnt.length; i++){
+        if(scene.getObjectByName("ant3D" + listeAnt[i].number) != undefined){
+            var antUsed = scene.getObjectByName("ant3D" + listeAnt[i].number);
+            antUsed.position.set(listeAnt[i].pos.x, listeAnt[i].pos.y+0.5, listeAnt[i].pos.z);
+            if(i > 0){
+                rotateModel3D(antUsed, listeAnt[i-1].pos);
+            }
+            else{
+                if(listePoint.length > 0){
+                    rotateModel3D(antUsed, listePoint[0]);
+                }
+                
+            }
+                
+            
+        }
+    }
+}
+
+function rotateModel3D(theModel, direction){
+    var target = new THREE.Vector3().subVectors(direction, theModel.position);
+    target.normalize();
+    var vec = Math.atan2(target.x, target.z)
+    theModel.rotation.y = vec + Math.PI/2;
+
+
+
+    //theModel.lookAt(target);
+    //target.set(direction.x, direction.y, direction.z);
+
+
 }
 
 
@@ -332,6 +352,7 @@ function animate(time){
     raycaster.setFromCamera(pointer, activeCamera);
     movingAnt();
     move3DModel();
+    
     /*
     if(scene.getObjectByName("ant3D") != undefined && Firstant != undefined){
         scene.getObjectByName("ant3D").position.set(Firstant.pos.x, Firstant.pos.y, Firstant.pos.z);}*/
