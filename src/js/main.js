@@ -141,6 +141,9 @@ function onMouseReleased(event){
         window.removeEventListener('mousedown', onMousePressed);
         window.removeEventListener('mousemove', onMouseDragged);
         window.removeEventListener('mouseup', onMouseReleased);
+        window.removeEventListener('touchstart', onTouch);
+        window.removeEventListener('touchmove', onSwipe);
+        window.removeEventListener('touchend', onReleased);
     
         //Init the ant and the first point
         start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
@@ -154,6 +157,81 @@ function onMouseReleased(event){
     
     
 }
+
+function onTouch(event){
+    console.log("Screen touched");
+    //Find the coordinate where i touched
+    var x = event.touches[0].clientX;
+    var y = event.touches[0].clientY;
+    console.log(x,y);
+
+    if(canDraw == true){
+        pointer.x = (x / window.innerWidth) * 2 - 1;
+        pointer.y = - (y / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, activeCamera);
+
+        const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
+        //console.log(intersects);
+
+        if(intersects.length >= 0 && canDraw == true){
+            
+            drawing = true;
+            console.log("Mouse pressed");
+            listePoint.push(intersects[0].point);
+            //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+        }
+    }
+    else console.log("Can't draw")
+}
+
+function onSwipe(event){
+    console.log("Screen swiped");
+
+    if(drawing){
+        pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, activeCamera);
+        const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
+        if(intersects.length > 0){
+            listePoint.push(intersects[0].point);
+            //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+            drawline();
+        }
+    }
+}
+
+function onReleased(event){
+    console.log("Screen Released");
+
+    if(listePoint.length < 15){
+        console.log("Not enough points");
+        listePoint = [];
+    }
+    else{
+        drawing = false;
+        canDraw = false;
+    
+        //Remove the event listener
+        window.removeEventListener('mousedown', onMousePressed);
+        window.removeEventListener('mousemove', onMouseDragged);
+        window.removeEventListener('mouseup', onMouseReleased);
+        window.removeEventListener('touchstart', onTouch);
+        window.removeEventListener('touchmove', onSwipe);
+        window.removeEventListener('touchend', onReleased);
+    
+        //Init the ant and the first point
+        start = {x: listePoint[0].x, y: listePoint[0].y, z: listePoint[0].z};
+        finish = {x: listePoint[listePoint.length-1].x, y: listePoint[listePoint.length-1].y, z: listePoint[listePoint.length-1].z};
+        Firstant = new Ant(start.x,start.y,start.z, counter);
+        attach3DModel(counter);
+        counter++;
+        listeAnt.push(Firstant);
+        scene.add(Firstant.body);
+    }
+
+}
+
+
 
 function drawline(){
     if(listePoint.length > 1){
@@ -250,12 +328,14 @@ var tailleModel = 0.015;
 function attach3DModel(counterT){
     if(model == undefined){
         const loader = new GLTFLoader();
+        loadNest(loader);
         loader.load('/src/modele/ant/ant/scene.gltf', function(bod){
             bod.scene.scale.set(tailleModel,tailleModel,tailleModel);
             bod.scene.position.set(start.x,start.y,start.z);
             bod.scene.name = "ant3D" + counterT;
             model = bod.scene;
             scene.add(bod.scene);
+            
             
             //console.log(bod);
         });
@@ -283,7 +363,9 @@ function removeAnt(toRemove){
 }
 
 
-////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////// TEST ZONE //////////////////
 
 function move3DModel(){
@@ -306,6 +388,8 @@ function move3DModel(){
     }
 }
 
+// A tester et faire fonctionner
+
 function rotateModel3D(theModel, direction){
     var target = new THREE.Vector3().subVectors(direction, theModel.position);
     target.normalize();
@@ -320,18 +404,37 @@ function rotateModel3D(theModel, direction){
 
 }
 
+//Load a 3D model
+
+function loadNest(loader){
+    console.log("Load nest")
+    loader.load('/src/modele/nest/raptor_nest/scene.gltf', function(bod){
+        bod.scene.scale.set(3,3,3);
+        bod.scene.position.set(start.x,start.y,start.z);
+        bod.scene.name = "Nest";
+        model = bod.scene;
+        scene.add(bod.scene);
+        console.log(scene)
+    });
+}
 
 
 
 
 
 
-////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// ANIMATION AND LISTENER ////////
 
 window.addEventListener('mousedown', onMousePressed);
 window.addEventListener('mousemove', onMouseDragged);
 window.addEventListener('mouseup', onMouseReleased);
+
+window.addEventListener('touchstart', onTouch);
+window.addEventListener('touchmove', onSwipe);
+window.addEventListener('touchend', onReleased);
 
 window.addEventListener('keydown', (event) => {
     // Check if the 'w' or 'W' key was pressed
