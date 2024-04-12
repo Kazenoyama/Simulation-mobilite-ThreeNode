@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import Table from '/src/js/table.js'; //Import of the Table class
 import Ant from '/src/js/ant.js'; //Import of the Ant class
+import Obstacle from '/src/js/obstacle.js';
 
 /**
  * Create the scene and set its background color 
@@ -413,6 +414,18 @@ function rotateModel3D(theModel, direction){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////// TEST ZONE //////////////////
+
+var obstacle = new Obstacle({x: 0, y: 10.5, z: 0});
+obstacle.createObstacle(scene);
+obstacle = new Obstacle({x: 0, y: 10.5, z: 10});
+obstacle.createObstacle(scene);
+obstacle = new Obstacle({x: 0, y: 10.5, z: -10});
+obstacle.createObstacle(scene);
+obstacle = new Obstacle({x: 10, y: 10.5, z: 0});
+obstacle.createObstacle(scene);
+obstacle = new Obstacle({x: -10, y: 10.5, z: 0});
+obstacle.createObstacle(scene);
+
 
 
 
