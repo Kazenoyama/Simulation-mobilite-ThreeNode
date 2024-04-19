@@ -142,6 +142,13 @@ class  Ant {
                     speedZ = -speedZ;
                 }*/
 
+                //corner right bottom
+                /*
+                if(distToObsX >= 0 && distToObsZ < 0){
+                    speedX = speedX;
+                    speedZ = -speedZ;
+                }*/
+
                 
             }
             
@@ -162,11 +169,15 @@ class  Ant {
 
     traceLine(scene){
         
-        if (this.point.length > 1 && this.point[this.point.length - 1] != this.point[this.point.length - 2]){
-            const material = new THREE.LineBasicMaterial( { color: this.color, linewidth: 1, linejoin: 'round'} );
-            const geometry = new THREE.BufferGeometry().setFromPoints( this.point );
-            const line = new THREE.Line( geometry, material );
-            scene.add( line );
+        if (this.point.length > 1 && 
+            this.point[this.point.length - 1] != this.point[this.point.length - 2] &&
+            this.point[this.point.length - 2].distanceTo(this.point[this.point.length - 1]) > 0.2){
+
+
+                const material = new THREE.LineBasicMaterial( { color: this.color, linewidth: 1, linejoin: 'round'} );
+                const geometry = new THREE.BufferGeometry().setFromPoints( this.point );
+                const line = new THREE.Line( geometry, material );
+                scene.add( line );
 
         }
 
