@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import Table from '/src/js/table.js'; //Import of the Table class
 import Ant from '/src/js/ant.js'; //Import of the Ant class
 import Obstacle from '/src/js/obstacle.js';
+import RLoop from '/src/js/rloop.js';
 
 /**
  * Create the scene and set its background color 
@@ -75,6 +76,7 @@ function splitScreen(){
 /**
  * Create the table and add it to the scene
  */
+
 const table = new Table(50,50,100);
 scene.add(table.getTable());
 
@@ -97,11 +99,14 @@ scene.add(directionalLight);
 
 var drawing = false;
 var canDraw = true;
+var co = true;
 var listePoint = [];
+var listeLine = [];
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
+/*
 function onMousePressed(event){
     if(canDraw == true){
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -128,7 +133,8 @@ function onMouseDragged(event){
         pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, activeCamera);
         const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
-        if(intersects.length > 0){
+
+        if(intersects.length > 0 && drawing == true){
             listePoint.push(intersects[0].point);
             //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
             drawline();
@@ -169,24 +175,34 @@ function onMouseReleased(event){
     
 }
 
+*/
+
 function onTouch(event){
     console.log("Screen touched");
     //Find the coordinate where i touched
     var x = event.touches[0].clientX;
     var y = event.touches[0].clientY;
-    console.log(x,y);
+    //console.log(x,y);
 
     if(canDraw == true){
+        co = true;
         pointer.x = (x / window.innerWidth) * 2 - 1;
         pointer.y = - (y / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, activeCamera);
 
         const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
-        //console.log(intersects);
 
-        if(intersects.length >= 0 && canDraw == true){
+        for(var i = 0; i < listeObstacle.length; i++){
+            if(listeObstacle[i].distance(intersects[0].point.x, 10.5, intersects[0].point.z) < listeObstacle[i].radius){
+                co = false;
+                break;
+            }
+        }
+
+        if(intersects.length >= 0 && co == true){
             
             drawing = true;
+            
             console.log("Mouse pressed");
             listePoint.push(intersects[0].point);
             //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
@@ -198,11 +214,32 @@ function onTouch(event){
 function onSwipe(event){
     console.log("Screen swiped");
 
-    if(drawing){
-        pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+
+    pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
         pointer.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, activeCamera);
         const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
+
+
+    for(var i = 0; i < listeObstacle.length; i++){
+        if(listeObstacle[i].distance(intersects[0].point.x, 10.5, intersects[0].point.z) < listeObstacle[i].radius-1){
+            drawing = false;
+            console.log("Can't draw here");
+            listePoint = [];
+
+            //Remove from the scene all object in listeLine
+            for(var i = 0; i < listeLine.length; i++){
+                scene.remove(listeLine[i]);
+            }
+
+            listeLine = [];
+
+            break;
+        }
+    }
+
+    if(drawing){
+        
         if(intersects.length > 0){
             listePoint.push(intersects[0].point);
             //console.log(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
@@ -226,9 +263,11 @@ function onReleased(event){
         camera.lookAt(0,10.5,0);
     
         //Remove the event listener
+        /*
         window.removeEventListener('mousedown', onMousePressed);
         window.removeEventListener('mousemove', onMouseDragged);
         window.removeEventListener('mouseup', onMouseReleased);
+        */
         window.removeEventListener('touchstart', onTouch);
         window.removeEventListener('touchmove', onSwipe);
         window.removeEventListener('touchend', onReleased);
@@ -253,6 +292,7 @@ function drawline(){
         var points = curve.getPoints(1000);
         var geometry = new THREE.BufferGeometry().setFromPoints(points);
         var line = new THREE.Line(geometry, material);
+        listeLine.push(line);
         scene.add(line);
     }
 
@@ -295,6 +335,7 @@ function addAnt(){
       }
     }
 }
+/*
 
 function movingAnt(){
 
@@ -321,16 +362,12 @@ function movingAnt(){
                 listeAnt[i-1].traceLine(scene);
                 if(listeAnt[i].distance(finish.x,finish.y,finish.z) < 0.1){
                     removeAnt(i);
-                    /*
-                    scene.remove(scene.getObjectByName(listeAnt[i].body.name));
-                    listeAnt.splice(i,1);
-                    */
                 }
             }
         }
     }
 
-}
+} */
 
 ////////////////////////////////////////
 /////////// 3D MODELS //////////////////
@@ -412,34 +449,101 @@ function rotateModel3D(theModel, direction){
     theModel.updateMatrixWorld(true);
 }
 
+
+////////////////////////////////////////
+/////////// OBSTACLE ///////////////////
+
+var listeObstacle = [];
+var MaxO = 10;
+
+var canPlaceObstacle = true;
+
+function placeObstacle(event){
+
+    if(!canDraw) canPlaceObstacle = false;
+
+    if(canPlaceObstacle){
+        //get the position of the mouse
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, activeCamera);
+
+        const intersects = raycaster.intersectObject(scene.children[0].children[0], true);
+        //console.log(intersects);
+
+        if(intersects.length >= 0){
+            var canPlace = true;
+            for(var i = 0; i < listeObstacle.length; i++){
+                if(listeObstacle[i].distance(intersects[0].point.x, 10.5, intersects[0].point.z) < listeObstacle[i].radius){
+                    console.log(listeObstacle[i].radius)
+                    canPlace = false;
+                    break;
+                }
+            }
+            if(canPlace){
+                var obstacle = new Obstacle({x: intersects[0].point.x, y: 10.5, z: intersects[0].point.z});
+                    obstacle.createObstacle(scene);
+                    listeObstacle.push(obstacle);
+            }
+            else{
+                console.log("Can't place obstacle here");
+                    
+            }
+        }
+
+
+
+    }
+}
+
+window.addEventListener('click', placeObstacle);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////// TEST ZONE //////////////////
 
-var obstacle = new Obstacle({x: 0, y: 10.5, z: 0});
-obstacle.createObstacle(scene);
-obstacle = new Obstacle({x: 0, y: 10.5, z: 10});
-obstacle.createObstacle(scene);
-obstacle = new Obstacle({x: 0, y: 10.5, z: -10});
-obstacle.createObstacle(scene);
-obstacle = new Obstacle({x: 10, y: 10.5, z: 0});
-obstacle.createObstacle(scene);
-obstacle = new Obstacle({x: -10, y: 10.5, z: 0});
-obstacle.createObstacle(scene);
+function movingAnt(){
+    
 
+    if(canDraw == false && drawing == false && listePoint.length > 0){
+        addAnt();
+        Firstant.followN(listePoint[0].x, listePoint[0].y, listePoint[0].z);
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].setObs(listeObstacle);
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+                listeAnt[i-1].traceLine(scene);
+                
+            }
+        }
+        if(Firstant.pos.x == listePoint[0].x && Firstant.pos.y == listePoint[0].y && Firstant.pos.z == listePoint[0].z){
+            listePoint.shift();
+        }
+    };
 
+    if(listePoint.length == 0 && canDraw == false){
+        addAnt();
+        if(listeAnt.length > 1){
+            for(var i = 1; i < listeAnt.length; i++){
+                listeAnt[i].setObs(listeObstacle);
+                listeAnt[i].followPrevious(listeAnt[i-1]);
+                listeAnt[i-1].traceLine(scene);
+                if(listeAnt[i].distance(finish.x,finish.y,finish.z) < 0.1){
+                    removeAnt(i);
+                }
+            }
+        }
+    }
 
-
-
-
-
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// ANIMATION AND LISTENER ////////
-
+/*
 window.addEventListener('mousedown', onMousePressed);
 window.addEventListener('mousemove', onMouseDragged);
 window.addEventListener('mouseup', onMouseReleased);
-
+*/
 window.addEventListener('touchstart', onTouch);
 window.addEventListener('touchmove', onSwipe);
 window.addEventListener('touchend', onReleased);

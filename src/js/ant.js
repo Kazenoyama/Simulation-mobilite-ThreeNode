@@ -16,6 +16,7 @@ class  Ant {
         this.path = '/src/modele/ant/ant/scene.gltf'
 
         this.createAnt();
+        this.listeObs = [];
     }
 
     /**
@@ -88,6 +89,8 @@ class  Ant {
         var dy = ant.pos.y - this.pos.y;
         var dz = ant.pos.z - this.pos.z;
         var distanceToAnt = this.distance(ant.pos.x, ant.pos.y, ant.pos.z);
+
+        
         
         if (distanceToAnt < this.minDistanceToAnt) {
             // If too close to ant, stop moving
@@ -107,7 +110,43 @@ class  Ant {
                 var speedZ = dz;
             }
         }
-    
+
+        for(var i = 0; i < this.listeObs.length; i++){
+        
+            var distToObsX = this.listeObs[i].position.x - this.pos.x;
+            var distToObsY = this.listeObs[i].position.y - this.pos.y;
+            var distToObsZ = this.listeObs[i].position.z - this.pos.z;
+
+            if(Math.abs(distToObsX) < 2 && Math.abs(distToObsZ) < 2){
+                console.log("distToObsX: " + distToObsX + " distToObsZ: " + distToObsZ);
+
+                //Corner right up
+                //turn right bottom
+                if (distToObsX < 0 && distToObsZ >= 0){
+                    speedX = -speedX;
+                    speedZ = speedZ;
+                }
+
+                //corner left up
+                //turn left bottom
+                if(distToObsX < 1 && distToObsZ < 1){
+                    speedX -= speedX;
+                    speedZ = speedZ;
+                }
+
+                /*
+
+                //corner left bottom
+                if(distToObsX >= 0 && distToObsZ < -1){
+                    speedX = -speedX;
+                    speedZ = -speedZ;
+                }*/
+
+                
+            }
+            
+        }
+
         this.pos.x += speedX;
         this.pos.y += speedY;
         this.pos.z += speedZ;
@@ -123,7 +162,7 @@ class  Ant {
 
     traceLine(scene){
         
-        if (this.point.length > 1){
+        if (this.point.length > 1 && this.point[this.point.length - 1] != this.point[this.point.length - 2]){
             const material = new THREE.LineBasicMaterial( { color: this.color, linewidth: 1, linejoin: 'round'} );
             const geometry = new THREE.BufferGeometry().setFromPoints( this.point );
             const line = new THREE.Line( geometry, material );
@@ -141,6 +180,11 @@ class  Ant {
         }
         return color;
     }
+
+    setObs(listeObs){
+        this.listeObs = listeObs;
+    }
+
 
 }
 
