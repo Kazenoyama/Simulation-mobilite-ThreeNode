@@ -37,11 +37,12 @@ const pointer = new THREE.Vector2(); //Create a new vector2 object
 
 function onTouch(event){
     //console.log("Screnn touched");
-    pointer.x = (event.touches[0] / window.innerWidth) * 2 - 1;
-    pointer.y = - (event.touches[0] / window.innerHeight) * 2 + 1;
+    pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+    pointer.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(pointer, activeCamera);
     const intersects = raycaster.intersectObjects(scene.getObjectByName("table"), true);
+    console.log(intersects);
 }
 
 function onSwipe(event){
@@ -59,6 +60,7 @@ var activeCamera = orbitCamera; //Set the active camera to the orbit camera
 
 function animate() {
     requestAnimationFrame(animate); //Call the animate function
+    raycaster.setFromCamera(pointer,activeCamera); //Set the raycaster to the active camera
     renderer.render(scene, activeCamera); //Render the scene
 }
 
