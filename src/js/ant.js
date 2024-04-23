@@ -6,9 +6,11 @@ export default class Ant {
     constructor(x,y,z, number, model){
         this.position = {x:x, y:y, z:z};
         this.number = number;
-        this.speed = 0.10;
+        this.speed = 0.15;
         this.model = model;
         this.modelSize = 0.015;
+
+        this.minDistance = 4;
     }
 
     createAnt(){
@@ -38,9 +40,9 @@ export default class Ant {
 
     //Check the distance between the ant and the point
     distance(x,y,z){
-        var dx = x - this.pos.x;
-        var dy = y - this.pos.y;
-        var dz = z - this.pos.z;
+        var dx = x - this.position.x;
+        var dy = y - this.position.y;
+        var dz = z - this.position.z;
         return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
@@ -69,6 +71,41 @@ export default class Ant {
 
         var ant3D = scene.getObjectByName("ant3D"+this.number);
         var direction = new THREE.Vector3(x, y+0.5, z);
+        ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
+        this.rotateModel(ant3D, direction);
+    }
+
+    followPrevious(ant,scene){
+        var dx = ant.position.x - this.position.x;
+        var dy = ant.position.y - this.position.y;
+        var dz = ant.position.z - this.position.z;
+        var speedX, speedY, speedZ;
+        var distanceToAnt = this.distance(ant.position.x, ant.position.y, ant.position.z);
+        if(distanceToAnt < this.minDistance){
+            speedX = 0;
+            speedY = 0;
+            speedZ = 0;
+        }
+        else{
+            var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+            if(maxDistance > this.speed){
+                speedX = dx * this.speed / maxDistance;
+                speedY = dy * this.speed / maxDistance;
+                speedZ = dz * this.speed / maxDistance;
+            }
+            else{
+                speedX = dx;
+                speedY = dy;
+                speedZ = dz;
+            }
+        }
+
+        this.position.x += speedX;
+        this.position.y += speedY;
+        this.position.z += speedZ;
+
+        var ant3D = scene.getObjectByName("ant3D"+this.number);
+        var direction = new THREE.Vector3(ant.position.x, ant.position.y+0.5, ant.position.z);
         ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
         this.rotateModel(ant3D, direction);
     }

@@ -98,7 +98,7 @@ function onRelease(event){
         console.log("Drawing finished");
         var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, 0, modelAnt);
         FirstAnt.attachModel(scene);
-        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints);
+        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints, modelAnt);
 
         orbitCamera.position.set(0,20,35);
         orbitCamera.lookAt(0,0,0);
