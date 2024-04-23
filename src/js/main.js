@@ -1,10 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 
 import Table from './table.js';
 import Drawing from './Drawing.js';
 import Ant from './ant.js';
-import { GLTFLoader } from 'three/examples/jsm/Addons.js';
+import Loop from './loop.js';
+
+
+
 
 window.onload = loadAllModel();
 
@@ -43,6 +47,7 @@ const raycaster = new THREE.Raycaster(); //Create a new raycaster object
 const pointer = new THREE.Vector2(); //Create a new vector2 object
 
 var drawing = new Drawing();
+var loop;
 
 function onTouch(event){
     //console.log("Screnn touched");
@@ -84,6 +89,7 @@ function onRelease(event){
         drawing.listLine = [];
         drawing.listPoints = [];
         drawing.drawing = false;
+        return;
     }
 
     if(drawing.canDraw){
@@ -92,11 +98,22 @@ function onRelease(event){
         console.log("Drawing finished");
         var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, 0, modelAnt);
         FirstAnt.attachModel(scene);
+        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints);
+
+        orbitCamera.position.set(0,20,35);
+        orbitCamera.lookAt(0,0,0);
+
+        activeCamera = orbitCamera;
+
+        window.removeEventListener('touchstart',onTouch);
+        window.removeEventListener('touchmove',onSwipe);
+        window.removeEventListener('touchend',onRelease);
+        
+        
     }
 
     else{
         console.log("You have already finished drawing");
-
     }
 
 }
@@ -124,6 +141,11 @@ var activeCamera = fixCamera; //Set the active camera to the orbit camera
 function animate(time) {
     requestAnimationFrame(animate); //Call the animate function
     updateFPS(); //Update the FPS counter
+
+    if(loop != undefined){
+        loop.mainLoop(scene);
+    }
+
     raycaster.setFromCamera(pointer,activeCamera); //Set the raycaster to the active camera
     renderer.render(scene, activeCamera); //Render the scene
 }
