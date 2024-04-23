@@ -4,7 +4,7 @@ import Ant from './ant.js';
 import { add } from 'three/examples/jsm/libs/tween.module.js';
 
 export default class Loop {
-    constructor(FirstAnt, start, finish, listPoints, modelAnt){
+    constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt){
         this.start = start;
         this.finish = finish;
         this.modelAnt = modelAnt;
@@ -12,8 +12,9 @@ export default class Loop {
         this.listA = [];
         this.listA.push(FirstAnt);
         this.MaxAnt = 100; 
-        this.listO = [];
+        this.listO = listObstacle;
         this.counter = 1;
+        console.log(this.listO);
 
     }
 
@@ -37,7 +38,6 @@ export default class Loop {
         this.addAnt(scene);
         this.follow(scene);
         for(var i =0; i < this.listA.length; i++){this.deleteAnt(i,scene);}
-        console.log(this.listA.length);
     }
 
     follow(scene){
@@ -45,7 +45,7 @@ export default class Loop {
             this.listA[0].followN(this.finish.x, this.finish.y, this.finish.z, scene);
         }
         for(var i = 1; i < this.listA.length; i++){
-            this.listA[i].followPrevious(this.listA[i-1], scene); 
+            this.listA[i].followPrevious(this.listA[i-1],this.listO, scene); 
         }
     }
 
@@ -64,6 +64,8 @@ export default class Loop {
             this.counter++;
         }
     }
+
+
 
 
 

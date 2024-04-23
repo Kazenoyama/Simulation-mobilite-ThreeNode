@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js'; //Import of the orbital camera
-
 export default class Ant {
     constructor(x,y,z, number, model){
         this.position = {x:x, y:y, z:z};
@@ -75,7 +73,7 @@ export default class Ant {
         this.rotateModel(ant3D, direction);
     }
 
-    followPrevious(ant,scene){
+    followPrevious(ant,listO, scene){
         var dx = ant.position.x - this.position.x;
         var dy = ant.position.y - this.position.y;
         var dz = ant.position.z - this.position.z;
@@ -98,6 +96,8 @@ export default class Ant {
                 speedY = dy;
                 speedZ = dz;
             }
+
+            speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
         }
 
         this.position.x += speedX;
@@ -116,4 +116,26 @@ export default class Ant {
         ant3D.rotateY(Math.PI);
         ant3D.updateMatrixWorld(true);
     }
+
+    avoidObstacle(sX, sY, sZ, listO){
+        for(var i = 0; i < listO.length; i++){
+            var dx = listO[i].position.x - this.position.x;
+            var dz = listO[i].position.z - this.position.z;
+            if(Math.abs(dx) < 2 && Math.abs(dz) < 2){
+                if(dx < 0 && dz >= 0){
+                    sX -= sX;
+                    sZ = sZ;
+                }
+                else{
+                    sX = dx;
+                    sZ -= dz;
+                }
+            }
+        }
+
+        return sX, sY, sZ;
+
+    }
+
+
 }

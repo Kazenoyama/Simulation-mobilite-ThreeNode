@@ -6,6 +6,7 @@ import Table from './table.js';
 import Drawing from './Drawing.js';
 import Ant from './ant.js';
 import Loop from './loop.js';
+import Obstacle from './obstacle.js';
 
 
 
@@ -98,12 +99,15 @@ function onRelease(event){
         console.log("Drawing finished");
         var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, 0, modelAnt);
         FirstAnt.attachModel(scene);
-        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints, modelAnt);
+        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints,listObstacle, modelAnt);
 
         orbitCamera.position.set(0,20,35);
         orbitCamera.lookAt(0,0,0);
 
         activeCamera = orbitCamera;
+
+        modelNest.position.set(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z);
+        scene.add(modelNest);
 
         window.removeEventListener('touchstart',onTouch);
         window.removeEventListener('touchmove',onSwipe);
@@ -118,22 +122,97 @@ function onRelease(event){
 
 }
 
+function placeObstacle(event){
+    if(drawing.canDraw){
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, activeCamera);
+        const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+        if(intersects.length > 0){
+            var position = intersects[0].point;
+            var scale = 1;
+            var radius = 3;
+            var typeOfMug;
+            
+            var randoNumber = Math.floor(Math.random() * 3);
+            switch(randoNumber){
+                case 0:
+                typeOfMug = modelCup1;
+                scale = 1;
+                position.y += 1.2;
+                radius = 3;
+                break;
+            case 1:
+                typeOfMug = modelCup2;
+                scale = 0.03;
+                position.y -= 0.5;
+                radius = 4;
+                break;
+            case 2:
+                typeOfMug = modelCup3;
+                scale = 20;
+                position.y += 1.05;
+                radius = 3;
+                break;
+            default:
+                typeOfMug = modelCup1;
+                radius = 3;
+                position.y += 1.2;
+                scale = 1;
+                break;
+            }
+
+            listObstacle.push(new Obstacle(position, scale, typeOfMug));
+            listObstacle[listObstacle.length-1].placeObstacle(scene);
+        }
+    }
+}
+
 var modelAnt;
 var modelNest;
+var modelCup1;
+var modelCup2;
+var modelCup3;
+
+var listObstacle = [];
+
 function loadAllModel(){
     const loader = new GLTFLoader();
     loader.load('/src/modele/ant/ant/scene.gltf', function(gltf){
         gltf.scene.scale.set(0.01,0.01,0.01);
         gltf.scene.name = "OriginalAnt";
         modelAnt = gltf.scene;
+        console.log("Ant model loaded")
     })
 
     loader.load('/src/modele/nest/raptor_nest/scene.gltf', function(gltf){
         gltf.scene.scale.set(3,3,3);
         gltf.scene.position.set(0,0,0);
         modelNest = gltf.scene;
-    
+        console.log("Nest model loaded")
     })
+
+    loader.load("/src/modele/enamel_cup/scene.gltf", function(gltf){
+        gltf.scene.scale.set(0.01,0.01,0.01);
+        gltf.scene.position.set(0,0,0);
+        modelCup1 = gltf.scene;
+        console.log("Cup 1 model loaded")
+    });
+
+    loader.load("/src/modele/coffeeMug/scene.gltf", function(gltf){
+        gltf.scene.scale.set(0.01,0.01,0.01);
+        gltf.scene.position.set(0,0,0);
+        modelCup2 = gltf.scene;
+        console.log("Cup 2 model loaded")
+    });
+
+    loader.load("/src/modele/tasse_cafe/scene.gltf", function(gltf){
+        gltf.scene.scale.set(0.01,0.01,0.01);
+        gltf.scene.position.set(0,0,0);
+        modelCup3 = gltf.scene;
+        console.log("Cup 3 model loaded")
+    });
 }
 
 var activeCamera = fixCamera; //Set the active camera to the orbit camera
@@ -164,5 +243,6 @@ function updateFPS(){
 window.addEventListener('touchstart',onTouch);
 window.addEventListener('touchmove',onSwipe);
 window.addEventListener('touchend',onRelease);
+window.addEventListener('click',placeObstacle);
 
 requestAnimationFrame(animate); //Call the animate function
