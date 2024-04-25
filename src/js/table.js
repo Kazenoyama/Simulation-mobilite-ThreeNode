@@ -57,30 +57,34 @@ export default class Table {
       }
     
       createContour(w,d){
-          const contour = new THREE.BoxGeometry(w, 3, 1);
-          const contourMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
-          const contourMesh = new THREE.Mesh(contour, contourMaterial);
-          contourMesh.position.set(0, 10, -d/2);
-          this.tableElement.add(contourMesh);
-    
-          const contour2 = new THREE.BoxGeometry(w, 3, 1);
-          const contourMaterial2 = new THREE.MeshStandardMaterial({ color: 0x808080 });
-          const contourMesh2 = new THREE.Mesh(contour2, contourMaterial2);
-          contourMesh2.position.set(0, 10, d/2);
-          this.tableElement.add(contourMesh2);
-    
-          const contour3 = new THREE.BoxGeometry(1, 3, d);
-          const contourMaterial3 = new THREE.MeshStandardMaterial({ color: 0x808080 });
-          const contourMesh3 = new THREE.Mesh(contour3, contourMaterial3);
-          contourMesh3.position.set(-w/2, 10, 0);
-          this.tableElement.add(contourMesh3);
-    
-          const contour4 = new THREE.BoxGeometry(1, 3, d);
-          const contourMaterial4 = new THREE.MeshStandardMaterial({ color: 0x808080 });
-          const contourMesh4 = new THREE.Mesh(contour4, contourMaterial4);
-          contourMesh4.position.set(w/2, 10, 0);
-          this.tableElement.add(contourMesh4);
-      }
+            const contour = new THREE.BoxGeometry(w, 3, 1);
+            const contourMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+            const contourMesh = new THREE.Mesh(contour, contourMaterial);
+            contourMesh.position.set(0, 10, -d/2);
+            contourMesh.name = "contour1";
+            this.tableElement.add(contourMesh);
+        
+            const contour2 = new THREE.BoxGeometry(w, 3, 1);
+            const contourMaterial2 = new THREE.MeshStandardMaterial({ color: 0x808080 });
+            const contourMesh2 = new THREE.Mesh(contour2, contourMaterial2);
+            contourMesh2.position.set(0, 10, d/2);
+            contourMesh2.name = "contour2";
+            this.tableElement.add(contourMesh2);
+        
+            const contour3 = new THREE.BoxGeometry(1, 3, d);
+            const contourMaterial3 = new THREE.MeshStandardMaterial({ color: 0x808080 });
+            const contourMesh3 = new THREE.Mesh(contour3, contourMaterial3);
+            contourMesh3.position.set(-w/2, 10, 0);
+            contourMesh3.name = "contour3";
+            this.tableElement.add(contourMesh3);
+        
+            const contour4 = new THREE.BoxGeometry(1, 3, d);
+            const contourMaterial4 = new THREE.MeshStandardMaterial({ color: 0x808080 });
+            const contourMesh4 = new THREE.Mesh(contour4, contourMaterial4);
+            contourMesh4.position.set(w/2, 10, 0);
+            contourMesh4.name = "contour4";
+            this.tableElement.add(contourMesh4);
+        }
     
       createPole() {
           const pole = new THREE.Group();

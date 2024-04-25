@@ -11,7 +11,21 @@ import Obstacle from './obstacle.js';
 
 
 
-window.onload = loadAllModel();
+window.onload =initWander() ;
+
+function init(){
+    loadAllModel();
+    window.addEventListener('touchstart',onTouch);
+    window.addEventListener('touchmove',onSwipe);
+    window.addEventListener('touchend',onRelease);
+    window.addEventListener('click',placeObstacle);
+}
+
+function initWander(){
+    loadAllModel();
+    window.addEventListener('touchstart',onTouchWander);
+
+}
 
 const scene = new THREE.Scene(); //Create the scene
 scene.background = new THREE.Color(0xffffff); //Add a white background to the scene
@@ -109,6 +123,8 @@ function onRelease(event){
         modelNest.position.set(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z);
         scene.add(modelNest);
 
+        loop.typeOfLoop = "normal";
+
         window.removeEventListener('touchstart',onTouch);
         window.removeEventListener('touchmove',onSwipe);
         window.removeEventListener('touchend',onRelease);
@@ -120,6 +136,30 @@ function onRelease(event){
         console.log("You have already finished drawing");
     }
 
+}
+
+function onTouchWander(event){
+    pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, activeCamera);
+    const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+    if(intersects.length > 0){
+        drawing.addPoint(intersects[0].point);
+        modelNest.position.set(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+        scene.add(modelNest);
+        var FirstAnt = new Ant(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, modelAnt);
+        FirstAnt.attachModel(scene);
+        loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints, listObstacle, modelAnt);
+        loop.typeOfLoop = "wander";
+
+        window.removeEventListener('touchstart',onTouchWander);
+
+        orbitCamera.position.set(0,20,35);
+        orbitCamera.lookAt(0,0,0);
+        console.log("Position of the nest : ", modelNest.position.x, modelNest.position.z);
+
+        activeCamera = orbitCamera;
+    }
 }
 
 function placeObstacle(event){
@@ -222,7 +262,7 @@ function animate(time) {
     updateFPS(); //Update the FPS counter
 
     if(loop != undefined){
-        loop.mainLoop(scene);
+        loop.launchLoop(scene);
     }
 
     raycaster.setFromCamera(pointer,activeCamera); //Set the raycaster to the active camera
@@ -240,9 +280,6 @@ function updateFPS(){
     fpsDisplay.textContent = fps.toFixed(1);
 }
 
-window.addEventListener('touchstart',onTouch);
-window.addEventListener('touchmove',onSwipe);
-window.addEventListener('touchend',onRelease);
-window.addEventListener('click',placeObstacle);
+
 
 requestAnimationFrame(animate); //Call the animate function

@@ -9,6 +9,12 @@ export default class Ant {
         this.modelSize = 0.015;
 
         this.minDistance = 4;
+
+        this.targetDirection = {x:0, y:0, z:0};
+        this.pathTaken = [];
+        this.retracePath = false;
+        this.callback = true;
+        this.goodPath =[];
     }
 
     createAnt(){
@@ -132,9 +138,59 @@ export default class Ant {
                 }
             }
         }
-
         return sX, sY, sZ;
+    }
 
+    wander(scene){
+        if(this.retracePath){
+            this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
+            if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
+                this.goodPath.concat(this.pathTaken[this.pathTaken.length-1]);
+                this.pathTaken.pop();
+            }
+            if(this.pathTaken.length <= 1 && !this.callback){
+                this.retracePath = false;
+            }
+        }
+        else{
+            var targetX = this.targetDirection.x; // Calculate target X position
+            var targetZ = this.targetDirection.z; // Calculate target Z positichaon
+
+            if(targetX > 24 ){
+                targetX = targetX - (targetX - 24);
+                targetZ = targetZ;
+            }
+            if(targetX < -24){
+                targetX = targetX - (targetX + 24);
+                targetZ = targetZ;
+            }
+            if(targetZ > 24){
+                targetZ = targetZ - (targetZ - 24);
+                targetX = targetX;
+            }
+            if(targetZ < -24){
+                targetZ = targetZ - (targetZ + 24);
+                targetX = targetX;
+            }
+
+            
+
+            this.followN(targetX, this.position.y, targetZ, scene); // Call followN with the modified target position
+            this.addToPathTaken(this.position.x, this.position.y, this.position.z); // Add the current position to the path taken
+        }
+
+    }
+
+    addToPathTaken(x,y,z){
+        if(this.pathTaken.length <= 0){
+            this.pathTaken.push({x:x, y:y, z:z});
+        }
+        if(this.pathTaken[this.pathTaken.length-1].x != x &&
+            this.pathTaken[this.pathTaken.length-1].z != z &&
+            (Math.abs(this.pathTaken[this.pathTaken.length-1].x - x) > 4 ||
+            Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
+            this.pathTaken.push({x:x, y:y, z:z});
+        } 
     }
 
 

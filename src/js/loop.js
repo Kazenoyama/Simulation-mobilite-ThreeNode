@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import Ant from './ant.js';
 import { add } from 'three/examples/jsm/libs/tween.module.js';
+import { call } from 'three/examples/jsm/nodes/Nodes.js';
 
 export default class Loop {
     constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt){
@@ -11,11 +12,31 @@ export default class Loop {
         this.listP = listPoints;
         this.listA = [];
         this.listA.push(FirstAnt);
-        this.MaxAnt = 100; 
+        this.MaxAnt = 6; 
         this.listO = listObstacle;
         this.counter = 1;
-        console.log(this.listO);
+        
+        this.typeOfLoop;
+        this.intervallLaunched = false;
+        this.maxPath = 20;
+        this.listN = [];
 
+    }
+
+    launchLoop(scene){
+        switch(this.typeOfLoop){
+            case 'normal':
+                this.mainLoop(scene);
+                break;
+            case 'wander':
+                this.wanderLoop(scene);
+                this.intervallLaunched = true;
+                
+                break;
+            default:
+                console.log("Error: type of loop not defined");
+                break;
+        }
     }
 
     mainLoop(scene){
@@ -33,6 +54,43 @@ export default class Loop {
             this.actionForAnt(scene);
         }
     };
+
+    wanderLoop(scene){
+        this.addAnt(scene);
+        if(!this.intervallLaunched){
+            this.launcIntervall();
+            
+        }
+        for(var i =0 ; i < this.listA.length; i++){
+            if(this.listA[i].pathTaken.length >= this.maxPath){
+                this.listA[i].retracePath = true;
+            } 
+            this.listA[i].wander(scene);
+        };
+        console.log(this.listA[0].pathTaken.length);
+        
+    }
+
+    launcIntervall(){
+        setInterval(() => {
+            for(var i = 0; i < this.listA.length; i++){
+                if(this.listA[i].pathTaken.length < this.maxPath){
+                    const angle = Math.random() * Math.PI; // Random angle within 180 degrees
+                    const distance = Math.random() * 50  ; // Random distance within 10 units
+                    var offsetX = Math.sin(angle) * distance; // X offset based on angle and distance
+                    var offsetZ = Math.cos(angle) * distance; // Z offset based on angle and distance
+                    const goBehind = Math.random() * 2;
+                    if(goBehind < 1){
+                        offsetX = -offsetX;
+                        offsetZ = -offsetZ;
+                    }
+                    const negativeOffsetX = -offsetX; // Negative X offset
+                    const negativeOffsetZ = -offsetZ; // Negative Z offset
+                    this.listA[i].targetDirection = {x: offsetX, y: 0, z: offsetZ};
+                }
+            }
+        },500);
+    }
 
     actionForAnt(scene){
         this.addAnt(scene);
