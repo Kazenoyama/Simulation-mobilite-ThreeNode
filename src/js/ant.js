@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 
+export let antSettings = {
+    speed: 0.1,
+    minDistance: 4
+};
+
 export default class Ant {
     constructor(x,y,z, number, model){
         this.position = {x:x, y:y, z:z};
         this.number = number;
-        this.speed = 0.15;
+        this.speed = antSettings.speed;
         this.model = model;
         this.modelSize = 0.015;
 
-        this.minDistance = 4;
+        this.minDistance = antSettings.minDistance;
 
         this.targetDirection = {x:0, y:0, z:0};
         this.pathTaken = [];
@@ -201,6 +206,11 @@ export default class Ant {
             Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
             this.pathTaken.push({x:x, y:y, z:z});
         } 
+    }
+
+    updateParameter(){
+        this.speed = antSettings.speed;
+        this.minDistance = antSettings.minDistance;
     }
 
 

@@ -8,11 +8,12 @@ import Ant from './ant.js';
 import Loop from './loop.js';
 import Obstacle from './obstacle.js';
 import Food from './Food.js';
+import { isPaused } from './controle.js';
 
 
 
 
-window.onload =initWander() ;
+window.onload =init() ;
 
 function init(){
     loadAllModel();
@@ -37,7 +38,7 @@ function initWander(){
 
 }
 
-const scene = new THREE.Scene(); //Create the scene
+export const scene = new THREE.Scene(); //Create the scene
 scene.background = new THREE.Color(0xffffff); //Add a white background to the scene
 
 const renderer = new THREE.WebGLRenderer(); //Create the renderer
@@ -320,7 +321,9 @@ function animate(time) {
     updateFPS(); //Update the FPS counter
 
     if(loop != undefined){
-        loop.launchLoop(scene);
+        if(!isPaused){
+            loop.launchLoop(scene);
+        }
     }
 
     raycaster.setFromCamera(pointer,activeCamera); //Set the raycaster to the active camera

@@ -9,12 +9,30 @@
     <script src="/src/js/main.js" type="module"></script>
 
     <script src="/src/js/table.js" type="module"></script>
+    <script src="/src/js/controle.js" type="module"></script>
 
     <script src="/src/js/ant.js" type="module"></script>
     <script src="/src/js/obstacle.js" type="module"></script>
 </head>
 <body>
     <div id="fps"></div>
+    
+    <div id="ui-container" style="position: fixed; top: 10px; left: 10px; z-index: 100;">
+        <button id="pauseButton">Pause</button>
+        <button id="restartButton" onclick="">Restart</button>
+        <label id="antSpeedLabel" for="antSpeed" lang="en">Ant Speed</label>
+        <input id="antSpeed" type="range" name="antSpeed" min="0.05" max="0.75" step="0.05">
+        <label id="antDistanceLabel" for="antSpeed" lang="en">Ant distance</label>
+        <input id="antDistance" type="range" name="antDistance" min="1" max="20" value="6">
+        <div id="background-selector-container">
+            <label for="backgroundSelector">Select Background:</label>
+            <select id="backgroundSelector">
+                <option value="white">White</option>
+                <option value="LightGreen">Green</option>
+                <option value="LightBlue">Blue</option>
+            </select>
+        </div>
+    </div>
     
 </body>
 </html>
