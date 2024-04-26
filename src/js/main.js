@@ -7,6 +7,7 @@ import Drawing from './Drawing.js';
 import Ant from './ant.js';
 import Loop from './loop.js';
 import Obstacle from './obstacle.js';
+import Food from './Food.js';
 
 
 
@@ -24,6 +25,15 @@ function init(){
 function initWander(){
     loadAllModel();
     window.addEventListener('touchstart',onTouchWander);
+    window.addEventListener("keydown" , function(event){
+        if(event.key == "w"){
+            activeCamera = fixCamera;
+        }
+
+        if(event.key == "x"){
+            activeCamera = orbitCamera;
+        }
+    });
 
 }
 
@@ -156,9 +166,12 @@ function onTouchWander(event){
 
         orbitCamera.position.set(0,20,35);
         orbitCamera.lookAt(0,0,0);
-        console.log("Position of the nest : ", modelNest.position.x, modelNest.position.z);
+        //console.log("Position of the nest : ", modelNest.position.x, modelNest.position.z);
 
         activeCamera = orbitCamera;
+        setTimeout(function(){
+            window.addEventListener('click',placeFood);});
+        clearTimeout();
     }
 }
 
@@ -209,15 +222,42 @@ function placeObstacle(event){
     }
 }
 
+function placeFood(event){
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, activeCamera);
+    const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+    if(intersects.length > 0){
+        var position = intersects[0].point;
+        var randomFood = Math.floor(Math.random() * 2);
+        switch(randomFood){
+            case 0:
+                var food = cake;
+                break;
+            case 1:
+                var food = bread;
+                break;
+            default:
+                var food = cake;
+                break;
+        }
+        loop.listF.push(new Food(position, food, scene));
+    }
+
+}
+
 var modelAnt;
 var modelNest;
 var modelCup1;
 var modelCup2;
 var modelCup3;
+var cake;
+var bread;
 
 var listObstacle = [];
 
-function loadAllModel(){
+async function loadAllModel(){
     const loader = new GLTFLoader();
     loader.load('/src/modele/ant/ant/scene.gltf', function(gltf){
         gltf.scene.scale.set(0.01,0.01,0.01);
@@ -253,6 +293,24 @@ function loadAllModel(){
         modelCup3 = gltf.scene;
         console.log("Cup 3 model loaded")
     });
+
+    loader.load("/src/modele/handpainted_watercolor_cake/scene.gltf", function(gltf){
+        gltf.scene.scale.set(1,1,1);
+        gltf.scene.position.set(0,0,0);
+        gltf.scene.name = "cake";
+        cake = gltf.scene;
+        console.log("Cake model loaded")
+    });
+
+    
+    loader.load("/src/modele/bread/scene.gltf", function(gltf){
+        gltf.scene.scale.set(1,1,1);
+        gltf.scene.position.set(0,0,0);
+        gltf.scene.name = "bread";
+        bread = gltf.scene;
+        console.log("Bread model loaded")
+    });
+
 }
 
 var activeCamera = fixCamera; //Set the active camera to the orbit camera
@@ -269,7 +327,7 @@ function animate(time) {
     renderer.render(scene, activeCamera); //Render the scene
 }
 
-let fpsCounter = 0;
+//let fpsCounter = 0;
 let lastFrame = performance.now();
 const fpsDisplay = document.getElementById('fps');
 function updateFPS(){

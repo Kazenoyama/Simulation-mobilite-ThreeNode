@@ -15,6 +15,10 @@ export default class Ant {
         this.retracePath = false;
         this.callback = true;
         this.goodPath =[];
+        this.arrived = false;
+
+        this.eat =false;
+        this.loopLaunched = false;
     }
 
     createAnt(){
@@ -145,11 +149,17 @@ export default class Ant {
         if(this.retracePath){
             this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
             if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
-                this.goodPath.concat(this.pathTaken[this.pathTaken.length-1]);
+                this.goodPath.push(this.pathTaken[this.pathTaken.length-1]);
                 this.pathTaken.pop();
+                
             }
-            if(this.pathTaken.length <= 1 && !this.callback){
-                this.retracePath = false;
+            if((this.pathTaken.length <= 1 && !this.arrived)|| !this.callback){
+                this.arrived = true;
+                var inversePath = this.goodPath;
+                this.goodPath = [];
+                for(var i = inversePath.length-1; i >= 0; i--){
+                    this.goodPath.push(inversePath[i]);
+                }
             }
         }
         else{
