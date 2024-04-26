@@ -1,30 +1,32 @@
-import * as THREE from 'three'; //Import of three js
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js'; //Import of the orbital camera
+import * as THREE from 'three';
 
-class  Ant {
-    constructor(x,y,z, number) {
-        this.pos = {x:x, y:y, z:z};
-        this.speed = 0.25;
-        this.body;
-        this.minDistanceToAnt = 6;
-        this.drawingAnt = false;
-        this.point = [];
+export let antSettings = {
+    speed: 0.1,
+    minDistance: 4
+};
+
+export default class Ant {
+    constructor(x,y,z, number, model){
+        this.position = {x:x, y:y, z:z};
         this.number = number;
-        this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
+        this.speed = antSettings.speed;
+        this.model = model;
+        this.modelSize = 0.015;
 
-        this.color = this.randomColor();
-        this.path = '/src/modele/ant/ant/scene.gltf'
+        this.minDistance = antSettings.minDistance;
 
-        this.createAnt();
-        this.listeObs = [];
+        this.targetDirection = {x:0, y:0, z:0};
+        this.pathTaken = [];
+        this.retracePath = false;
+        this.callback = true;
+        this.goodPath =[];
+        this.arrived = false;
+
+        this.eat =false;
+        this.loopLaunched = false;
     }
 
-    /**
-     * Create the ant
-     * @returns {THREE.Group} The ant
-     * @memberof Ant
-     */
-    createAnt() {
+    createAnt(){
         const ant = new THREE.Group();
         const body = this.createBody();
         this.body = body;
@@ -33,170 +35,183 @@ class  Ant {
     }
 
     createBody(){
-        const body = new THREE.BoxGeometry(0.01, 0.01, 0.01);
-        const bodyMaterial = new THREE.MeshStandardMaterial({ color: "green" });
+        const body = new THREE.BoxGeometry(10,10,10);
+        const bodyMaterial = new THREE.MeshStandardMaterial({color: "black"});
         const bodyMesh = new THREE.Mesh(body, bodyMaterial);
-        bodyMesh.position.set(this.pos.x, this.pos.y, this.pos.z);
-        bodyMesh.name = "ant" + this.number;
+        bodyMesh.position.set(this.position.x, this.position.y, this.position.z);
+        bodyMesh.name = "ant"+this.number;
         return bodyMesh;
     }
 
-    /**
-     * Follow a path given point by point
-     * @param {x axis} x 
-     * @param {y axis} y 
-     * @param {z axis} z 
-     */
-    followN(x,y,z){
-        //console.log("FollowN")
-        var dx = x - this.pos.x;
-        var dy = y - this.pos.y;
-        var dz = z - this.pos.z;
-        var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-        if (maxDistance >= this.speed) {
-            var ratio = this.speed / maxDistance; // Ratio to limit speed
-            var speedX = dx * ratio;
-            var speedY = dy * ratio;
-            var speedZ = dz * ratio;
-        }
-        else {
-            var speedX = dx;
-            var speedY = dy;
-            var speedZ = dz;
-        }
-
-        //console.log("SpeedX: " + speedX + " SpeedY: " + speedY + " SpeedZ: " + speedZ);
-        this.pos.x += speedX;
-        this.pos.y += speedY;
-        this.pos.z += speedZ;
-        this.body.position.x = this.pos.x;
-        this.body.position.y = this.pos.y+ this.body.geometry.parameters.height/2 + 0.1;
-        this.body.position.z = this.pos.z;
+    attachModel(scene){
+        const clonedModel = this.model.clone();
+        clonedModel.scale.set(this.modelSize, this.modelSize, this.modelSize);
+        clonedModel.position.set(this.position.x, this.position.y, this.position.z);
+        clonedModel.name = "ant3D"+this.number;
+        scene.add(clonedModel);
     }
 
     //Check the distance between the ant and the point
     distance(x,y,z){
-        var dx = x - this.pos.x;
-        var dy = y - this.pos.y;
-        var dz = z - this.pos.z;
+        var dx = x - this.position.x;
+        var dy = y - this.position.y;
+        var dz = z - this.position.z;
         return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
-    //Follow the previous ant
-    followPrevious(ant) {
-        //console.log("FollowPrevious")
-        var dx = ant.pos.x - this.pos.x;
-        var dy = ant.pos.y - this.pos.y;
-        var dz = ant.pos.z - this.pos.z;
-        var distanceToAnt = this.distance(ant.pos.x, ant.pos.y, ant.pos.z);
+    followN(x,y,z,scene){
+        var dx = x - this.position.x;
+        var dy = y - this.position.y;
+        var dz = z - this.position.z;
+        var speedX, speedY, speedZ;
 
-        
-        
-        if (distanceToAnt < this.minDistanceToAnt) {
-            // If too close to ant, stop moving
-            var speedX = 0;
-            var speedY = 0;
-            var speedZ = 0;
-        } else {
-            var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-            if (maxDistance >= this.speed) {
-                var ratio = this.speed / maxDistance; // Ratio to limit speed
-                var speedX = dx * ratio;
-                var speedY = dy * ratio;
-                var speedZ = dz * ratio;
-            } else {
-                var speedX = dx;
-                var speedY = dy;
-                var speedZ = dz;
-            }
+        var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+
+        if(maxDistance > this.speed){
+            speedX = dx * this.speed / maxDistance;
+            speedY = dy * this.speed / maxDistance;
+            speedZ = dz * this.speed / maxDistance;
+        }
+        else{
+            speedX = dx;
+            speedY = dy;
+            speedZ = dz;
         }
 
-        for(var i = 0; i < this.listeObs.length; i++){
-        
-            var distToObsX = this.listeObs[i].position.x - this.pos.x;
-            var distToObsY = this.listeObs[i].position.y - this.pos.y;
-            var distToObsZ = this.listeObs[i].position.z - this.pos.z;
+        this.position.x += speedX;
+        this.position.y += speedY;
+        this.position.z += speedZ;
 
-            if(Math.abs(distToObsX) < 2 && Math.abs(distToObsZ) < 2){
-                console.log("distToObsX: " + distToObsX + " distToObsZ: " + distToObsZ);
+        var ant3D = scene.getObjectByName("ant3D"+this.number);
+        var direction = new THREE.Vector3(x, y+0.5, z);
+        ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
+        this.rotateModel(ant3D, direction);
+    }
 
-                //Corner right up
-                //turn right bottom
-                if (distToObsX < 0 && distToObsZ >= 0){
-                    speedX = -speedX;
-                    speedZ = speedZ;
+    followPrevious(ant,listO, scene){
+        var dx = ant.position.x - this.position.x;
+        var dy = ant.position.y - this.position.y;
+        var dz = ant.position.z - this.position.z;
+        var speedX, speedY, speedZ;
+        var distanceToAnt = this.distance(ant.position.x, ant.position.y, ant.position.z);
+        if(distanceToAnt < this.minDistance){
+            speedX = 0;
+            speedY = 0;
+            speedZ = 0;
+        }
+        else{
+            var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+            if(maxDistance > this.speed){
+                speedX = dx * this.speed / maxDistance;
+                speedY = dy * this.speed / maxDistance;
+                speedZ = dz * this.speed / maxDistance;
+            }
+            else{
+                speedX = dx;
+                speedY = dy;
+                speedZ = dz;
+            }
+
+            speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
+        }
+
+        this.position.x += speedX;
+        this.position.y += speedY;
+        this.position.z += speedZ;
+
+        var ant3D = scene.getObjectByName("ant3D"+this.number);
+        var direction = new THREE.Vector3(ant.position.x, ant.position.y+0.5, ant.position.z);
+        ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
+        this.rotateModel(ant3D, direction);
+    }
+
+    rotateModel(ant3D, direction){
+        const lookAtVector = new THREE.Vector3().copy(direction).sub(ant3D.position);
+        ant3D.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0), lookAtVector.clone().normalize());
+        ant3D.rotateY(Math.PI);
+        ant3D.updateMatrixWorld(true);
+    }
+
+    avoidObstacle(sX, sY, sZ, listO){
+        for(var i = 0; i < listO.length; i++){
+            var dx = listO[i].position.x - this.position.x;
+            var dz = listO[i].position.z - this.position.z;
+            if(Math.abs(dx) < 2 && Math.abs(dz) < 2){
+                if(dx < 0 && dz >= 0){
+                    sX -= sX;
+                    sZ = sZ;
                 }
-
-                //corner left up
-                //turn left bottom
-                if(distToObsX < 1 && distToObsZ < 1){
-                    speedX -= speedX;
-                    speedZ = speedZ;
+                else{
+                    sX = dx;
+                    sZ -= dz;
                 }
+            }
+        }
+        return sX, sY, sZ;
+    }
 
-                /*
-
-                //corner left bottom
-                if(distToObsX >= 0 && distToObsZ < -1){
-                    speedX = -speedX;
-                    speedZ = -speedZ;
-                }*/
-
-                //corner right bottom
-                /*
-                if(distToObsX >= 0 && distToObsZ < 0){
-                    speedX = speedX;
-                    speedZ = -speedZ;
-                }*/
-
+    wander(scene){
+        if(this.retracePath){
+            this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
+            if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
+                this.goodPath.push(this.pathTaken[this.pathTaken.length-1]);
+                this.pathTaken.pop();
                 
             }
+            if((this.pathTaken.length <= 1 && !this.arrived)|| !this.callback){
+                this.arrived = true;
+                var inversePath = this.goodPath;
+                this.goodPath = [];
+                for(var i = inversePath.length-1; i >= 0; i--){
+                    this.goodPath.push(inversePath[i]);
+                }
+            }
+        }
+        else{
+            var targetX = this.targetDirection.x; // Calculate target X position
+            var targetZ = this.targetDirection.z; // Calculate target Z positichaon
+
+            if(targetX > 24 ){
+                targetX = targetX - (targetX - 24);
+                targetZ = targetZ;
+            }
+            if(targetX < -24){
+                targetX = targetX - (targetX + 24);
+                targetZ = targetZ;
+            }
+            if(targetZ > 24){
+                targetZ = targetZ - (targetZ - 24);
+                targetX = targetX;
+            }
+            if(targetZ < -24){
+                targetZ = targetZ - (targetZ + 24);
+                targetX = targetX;
+            }
+
             
-        }
 
-        this.pos.x += speedX;
-        this.pos.y += speedY;
-        this.pos.z += speedZ;
-        this.body.position.x = this.pos.x;
-        this.body.position.y = this.pos.y + this.body.geometry.parameters.height / 2 + 0.1;
-        this.body.position.z = this.pos.z;
-
-        if (this.drawingAnt) {
-            //console.log("Drawing ant")
-            this.point.push(new THREE.Vector3(this.pos.x, this.pos.y, this.pos.z));
-        }
-    }
-
-    traceLine(scene){
-        
-        if (this.point.length > 1 && 
-            this.point[this.point.length - 1] != this.point[this.point.length - 2] &&
-            this.point[this.point.length - 2].distanceTo(this.point[this.point.length - 1]) > 0.2){
-
-
-                const material = new THREE.LineBasicMaterial( { color: this.color, linewidth: 1, linejoin: 'round'} );
-                const geometry = new THREE.BufferGeometry().setFromPoints( this.point );
-                const line = new THREE.Line( geometry, material );
-                scene.add( line );
-
+            this.followN(targetX, this.position.y, targetZ, scene); // Call followN with the modified target position
+            this.addToPathTaken(this.position.x, this.position.y, this.position.z); // Add the current position to the path taken
         }
 
     }
 
-    randomColor(){
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++){
-            color += letters[Math.floor(Math.random() * 16)];
+    addToPathTaken(x,y,z){
+        if(this.pathTaken.length <= 0){
+            this.pathTaken.push({x:x, y:y, z:z});
         }
-        return color;
+        if(this.pathTaken[this.pathTaken.length-1].x != x &&
+            this.pathTaken[this.pathTaken.length-1].z != z &&
+            (Math.abs(this.pathTaken[this.pathTaken.length-1].x - x) > 4 ||
+            Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
+            this.pathTaken.push({x:x, y:y, z:z});
+        } 
     }
 
-    setObs(listeObs){
-        this.listeObs = listeObs;
+    updateParameter(){
+        this.speed = antSettings.speed;
+        this.minDistance = antSettings.minDistance;
     }
 
 
 }
-
-export default Ant;
