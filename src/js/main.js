@@ -24,7 +24,7 @@ function init(){
 }
 
 function initWander(){
-    loadAllModel();
+    //loadAllModel();
     window.addEventListener('touchstart',onTouchWander);
     window.addEventListener("keydown" , function(event){
         if(event.key == "w"){
@@ -36,6 +36,15 @@ function initWander(){
         }
     });
 
+}
+
+export function changeMethode(){
+    console.log("Change the methode");
+        window.removeEventListener('touchstart',onTouch);
+        window.removeEventListener('touchmove',onSwipe);
+        window.removeEventListener('touchend',onRelease);
+        window.removeEventListener('click',placeObstacle);-
+        initWander();
 }
 
 export const scene = new THREE.Scene(); //Create the scene
@@ -171,7 +180,7 @@ function onTouchWander(event){
 
         activeCamera = orbitCamera;
         setTimeout(function(){
-            window.addEventListener('click',placeFood);});
+            window.addEventListener('click',placeFood);}, 1000);
         clearTimeout();
     }
 }
@@ -235,15 +244,24 @@ function placeFood(event){
         switch(randomFood){
             case 0:
                 var food = cake;
+                var posY = 0;
+                var scale = 1;
                 break;
             case 1:
                 var food = bread;
+                var posY = 1.5;
+                var scale = 0.5;
                 break;
             default:
                 var food = cake;
+                var posY = 0;
+                var scale = 1;
                 break;
         }
-        loop.listF.push(new Food(position, food, scene));
+        var name = food.name + numfood;
+        loop.listF.push(new Food(position, food,name,scale, posY, scene));
+        console.log(loop.listF[loop.listF.length-1].name);
+        numfood++;
     }
 
 }
@@ -255,6 +273,8 @@ var modelCup2;
 var modelCup3;
 var cake;
 var bread;
+
+var numfood = 0;
 
 var listObstacle = [];
 

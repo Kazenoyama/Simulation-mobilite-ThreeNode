@@ -4,8 +4,8 @@ import Ant from './ant.js';
 
 export default class Loop {
     constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt){
-        console.log("Loop created")
-        console.log(start, finish, listPoints, listObstacle, modelAnt)
+        console.log("Loop created");
+        this.name;
         this.start = start;
         this.finish = finish;
         this.modelAnt = modelAnt;
@@ -13,16 +13,19 @@ export default class Loop {
         this.listA = [];
         this.listA.push(FirstAnt);
         this.MaxAnt = 20;
-        this.MaxWanderingAnt = 1;
+        this.MaxWanderingAnt = 4;
         this.listO = listObstacle;
         this.counter = 1;
         
         this.typeOfLoop;
         this.intervallLaunched = false;
-        this.maxPath = 20;
+        this.maxPath = 100;
         this.listF = [];
 
         this.listLoop = [];
+        this.stop = false;
+        this.deleteLoop = false;
+        this.foodToEat = null;
 
     }
 
@@ -61,6 +64,7 @@ export default class Loop {
 
     wanderLoop(scene){
         this.addAnt(scene);
+        this.deleteFood(scene);
         if(!this.intervallLaunched){
             this.launcIntervall(); 
         }
@@ -71,7 +75,8 @@ export default class Loop {
             //console.log("Ant number" +this.listA[i].number +" is recalling back " + this.listA[i].retracePath);
             
             for(var f = 0; f < this.listF.length; f++){
-                if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) <= 0.5){
+                if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) <= 0.5 && this.listA[i].eat == false){
+                    this.listA[i].foodEaten = this.listF[f];
                     this.listA[i].retracePath = true;
                     this.listA[i].eat = true;
                 }
@@ -83,26 +88,53 @@ export default class Loop {
                     //this.listF[f].growingRadius();
                 }
             }
+            if(this.listA[i].loopLaunched == false){
+                this.listA[i].wander(scene);
+            }
             
-            this.listA[i].wander(scene);
 
             if(this.listA[i].eat && this.listA[i].pathTaken.length <= 1 && this.listA[i].loopLaunched == false){
-                console.log("hello")
-
                 var finish = {x: this.listA[i].goodPath[this.listA[i].goodPath.length-1].x, y: this.listA[i].goodPath[this.listA[i].goodPath.length-1].y, z: this.listA[i].goodPath[this.listA[i].goodPath.length-1].z};
-                this.listLoop.push(new Loop(this.listA[i], this.listA[i].position, finish, this.listA[i].goodPath, this.listO, this.modelAnt));
+                var start = {x: this.listA[i].goodPath[0].x, y: this.listA[i].goodPath[0].y, z: this.listA[i].goodPath[0].z};
+                this.listLoop.push(new Loop(this.listA[i], start, finish, this.listA[i].goodPath, this.listO, this.modelAnt));
                 this.listLoop[this.listLoop.length -1].typeOfLoop = 'normal';
+                this.listLoop[this.listLoop.length -1].name = "loop"+this.listA[i].number;
+                this.listLoop[this.listLoop.length -1].foodToEat = this.listA[i].foodEaten;
                 this.listA[i].loopLaunched = true;
             }
 
             if(this.listLoop.length > 0){
                 for(var l = 0; l < this.listLoop.length; l++){
-                    //this.listLoop[l].launchLoop(scene);
+                    //this.listLoop[l].foodToEat = this.listA[i].foodEaten;
+                    this.listLoop[l].launchLoop(scene);
+                    if(this.listLoop[l].deleteLoop){
+                       this.listLoop.splice(l,1);
+                    }
                 }
             }
+            
         };
         //console.log(this.listA[0].pathTaken.length);
-        
+   
+    }
+
+    deleteFood(scene){
+        for(var f = 0; f < this.listF.length; f++){
+            if(this.listF[f].quantity <= 0){
+                var wait = false;
+                
+                for(var l = 0; l < this.listLoop.length; l++){
+                    if(this.listLoop[l].foodToEat.name == this.listF[f].name){
+                        wait = true;
+                    }
+                }
+                if(!wait){
+                    console.log('Food deleted');
+                    scene.remove(scene.getObjectByName(this.listF[f].name));
+                    this.listF.splice(f,1);
+                }
+            }
+        }
     }
 
     launcIntervall(){
@@ -133,10 +165,13 @@ export default class Loop {
     }
 
     actionForAnt(scene){
-        this.addAnt(scene);
+        if(!this.stop) this.addAnt(scene);
         this.updateAnt();
         this.follow(scene);
         for(var i =0; i < this.listA.length; i++){this.deleteAnt(i,scene);}
+        if(this.listA.length <= 0){
+            this.deleteLoop = true;
+        }
     }
 
     follow(scene){
@@ -162,6 +197,12 @@ export default class Loop {
                 this.listA.push(new Ant(this.start.x, this.start.y +0.5, this.start.z, this.counter, this.modelAnt));
                 this.listA[this.listA.length-1].attachModel(scene);
                 this.counter++;
+                if(this.foodToEat != null){
+                    this.foodToEat.decreaseQuantity();
+                    if(this.foodToEat.quantity <= 0){
+                        this.stop = true;
+                    }
+                }
             }
         }
 

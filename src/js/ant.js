@@ -24,6 +24,7 @@ export default class Ant {
 
         this.eat =false;
         this.loopLaunched = false;
+        this.foodEaten = null;
     }
 
     createAnt(){
@@ -154,17 +155,10 @@ export default class Ant {
         if(this.retracePath){
             this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
             if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
-                this.goodPath.push(this.pathTaken[this.pathTaken.length-1]);
-                this.pathTaken.pop();
-                
+                this.pathTaken.pop();    
             }
             if((this.pathTaken.length <= 1 && !this.arrived)|| !this.callback){
                 this.arrived = true;
-                var inversePath = this.goodPath;
-                this.goodPath = [];
-                for(var i = inversePath.length-1; i >= 0; i--){
-                    this.goodPath.push(inversePath[i]);
-                }
             }
         }
         else{
@@ -199,12 +193,14 @@ export default class Ant {
     addToPathTaken(x,y,z){
         if(this.pathTaken.length <= 0){
             this.pathTaken.push({x:x, y:y, z:z});
+            this.goodPath.push({x:x, y:y, z:z});
         }
         if(this.pathTaken[this.pathTaken.length-1].x != x &&
             this.pathTaken[this.pathTaken.length-1].z != z &&
             (Math.abs(this.pathTaken[this.pathTaken.length-1].x - x) > 4 ||
             Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
             this.pathTaken.push({x:x, y:y, z:z});
+            this.goodPath.push({x:x, y:y, z:z});
         } 
     }
 

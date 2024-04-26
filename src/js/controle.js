@@ -5,6 +5,7 @@ export let isPaused = false;  // Exportez isPaused pour l'utiliser dans d'autres
 import { antSettings } from './ant.js';
 import Table from './table.js'; //Import of the Table class
 import { scene } from './main.js';
+import { changeMethode } from './main.js';
 /// Control the Pause button with mouse click
 document.getElementById('pauseButton').addEventListener('click', function() {
     togglePauseState();
@@ -99,5 +100,18 @@ document.getElementById('backgroundSelector').addEventListener('change', functio
 
     // Change the color of the table
     tableMesh.material.color = new THREE.Color(selectedColor);
+});
+
+document.getElementById('normalModeButton').addEventListener('click', function() {
+    console.log('Normal mode button clicked');  // Debug line
+    location.reload();
+
+});
+
+document.getElementById('wanderingModeButton').addEventListener('click', function() {
+    console.log('Wander mode button clicked');  // Debug line
+    changeMethode();
+    
+
 });
 
