@@ -5,10 +5,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import Table from '/src/js/table.js'; //Import of the Table class
 import Ant from '/src/js/ant.js'; //Import of the Ant class
 
+import { controleSettings } from './controle.js';
+
 /**
  * Create the scene and set its background color 
 */
-const scene = new THREE.Scene();
+export const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xfffffff);
 
 /** 
@@ -246,7 +248,7 @@ function onReleased(event){
 
 function drawline(){
     if(listePoint.length > 1){
-        var material = new THREE.LineBasicMaterial({color: 0x0000ff, linewidth: 10});
+        var material = new THREE.LineBasicMaterial({color: 0x0000ff, linewidth: 20});
         //add smoothness to the line
         var curve = new THREE.CatmullRomCurve3(listePoint);
         var points = curve.getPoints(1000);
@@ -267,37 +269,40 @@ var intervalleDrawingAnt = 4;
 
 var listeAnt = [];
 function addAnt(){
-    //console.log("Add ant");
-    if(listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
-        
+    // console.log("Add ant enter");
+    if(listeAnt.length > 0 && listeAnt[listeAnt.length-1].distance(start.x,start.y,start.z) > 4 && listeAnt.length < 100){
+        console.log("Add ant case 1");
         listeAnt.push(new Ant(start.x,start.y,start.z,counter));
         attach3DModel(counter);
         counter++;
+        // not sure if it works! 
         if(counter%intervalleDrawingAnt == 0){
             listeAnt[listeAnt.length-1].drawingAnt = true;
             listeAnt[listeAnt.length-1].body.material.color.setHex(0x0000ff);
         }
-        scene.add(listeAnt[listeAnt.length-1].body);
+        // scene.add(listeAnt[listeAnt.length-1].body);
     }
     
 
     if(listeAnt[0].distance(finish.x,finish.y,finish.z) < 0.1){
- 
       if(listeAnt.length > 1){
         listeAnt[1].minDistanceToAnt = 0;
-
+        console.log("Add ant case 2-1");
         if(listeAnt[1].distance(finish.x,finish.y,finish.z) < 0.1){
             //console.log(scene.getObjectByName("ant0"));
             scene.remove(scene.getObjectByName(listeAnt[0].body.name));
             listeAnt.shift();
+            rescaleAntsTarget(10);
         }
       }
     }
+    // console.log("Add ant leave");
 }
 
 function movingAnt(){
 
     if(canDraw == false && drawing == false && listePoint.length > 0){
+        console.log("moving ant case 1");
         addAnt();
         Firstant.followN(listePoint[0].x, listePoint[0].y, listePoint[0].z);
         if(listeAnt.length > 1){
@@ -313,6 +318,7 @@ function movingAnt(){
     };
 
     if(listePoint.length == 0 && canDraw == false){
+        console.log("moving ant case 2");
         addAnt();
         if(listeAnt.length > 1){
             for(var i = 1; i < listeAnt.length; i++){
@@ -337,28 +343,30 @@ var model;
 var tailleModel = 0.015;
 
 function attach3DModel(counterT){
+    console.log("attach3d model started");
     if(model == undefined){
+        console.log("case new model");
         const loader = new GLTFLoader();
         loadNest(loader);
+        loadAntsTarget(loader);
         loader.load('/src/modele/ant/ant/scene.gltf', function(bod){
             bod.scene.scale.set(tailleModel,tailleModel,tailleModel);
             bod.scene.position.set(start.x,start.y,start.z);
             bod.scene.name = "ant3D" + counterT;
             model = bod.scene;
             scene.add(bod.scene);
-            
-            
             //console.log(bod);
         });
     }
     else{
+        console.log("case cloned model");
         const cloneModel = model.clone();
         cloneModel.scale.set(tailleModel,tailleModel,tailleModel);
         cloneModel.position.set(start.x,start.y,start.z);
         cloneModel.name = "ant3D" + counterT;
         scene.add(cloneModel);
-
     }
+    console.log("attach3d model ended");
 
 }
 
@@ -369,6 +377,43 @@ function removeAnt(toRemove){
     console.log("Remove ant");
     console.log(scene.getObjectByName("ant3D"+ listeAnt[toRemove].number));
     console.log(scene.getObjectByName(listeAnt[toRemove].body.name));*/
+}
+
+function loadAntsTarget(loader){
+    console.log("loadAntsTarget enter in function");
+    loader.load('/src/modele/StrawberryTarget.gltf', function(bod){
+        bod.scene.scale.set(1,1,1);
+        bod.scene.position.set(finish.x,finish.y,finish.z);
+        bod.scene.name = "AntsTarget";
+        model = bod.scene;
+        scene.add(bod.scene);
+        //console.log(scene)
+    });
+    console.log("loadAntsTarget end of function");
+}
+
+function rescaleAntsTarget(percentage) {
+    if(scene.getObjectByName("AntsTarget") != undefined){
+        var antsTarget = scene.getObjectByName("AntsTarget");
+        var currentScale = antsTarget.scale.x;
+        if( currentScale > 0.15){
+            // Convert the percentage to a scale factor
+            var scaleFactor = 1-(percentage / 100);
+            // Get the current scale
+            console.log("scale factor: " + scaleFactor);
+            console.log("Current scale: " + currentScale);
+            // Set the new scale
+            antsTarget.scale.set(currentScale * scaleFactor, currentScale * scaleFactor, currentScale * scaleFactor);    
+        }
+        else{
+            // Target is too small, remove it. 
+            scene.remove(scene.getObjectByName("AntsTarget"));
+
+            // do we need to stop the game  
+            controleSettings.isPaused = true;
+            document.getElementById('pauseButton').textContent = 'Reprendre';
+        }
+    }
 }
 
 function loadNest(loader){
@@ -453,12 +498,12 @@ window.addEventListener('keydown', (event) => {
 function animate(time){
     requestAnimationFrame(animate);
     raycaster.setFromCamera(pointer, activeCamera);
-    updateFPS();
-    movingAnt();
     move3DModel();
-
     //splitScreen();
-
+    if (!controleSettings.isPaused) {
+        updateFPS();
+        movingAnt();        
+    }
     renderer.render(scene, activeCamera);
 }
 
@@ -477,4 +522,5 @@ function updateFPS(){
 }
 
 requestAnimationFrame(animate);
+
 

@@ -1,12 +1,17 @@
 import * as THREE from 'three'; //Import of three js
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js'; //Import of the orbital camera
+// export let antSpeed = 0.1; //Export of the ant speed to use it in other modules
+export let antSettings = {
+    speed: 0.1,// initial speed value
+    minDistanceToAnt: 6 // minimum distance between ants
+};
 
 class  Ant {
     constructor(x,y,z, number) {
         this.pos = {x:x, y:y, z:z};
-        this.speed = 0.25;
+        this.speed = antSettings.speed;
         this.body;
-        this.minDistanceToAnt = 6;
+        this.minDistanceToAnt = antSettings.minDistanceToAnt;
         this.drawingAnt = false;
         this.point = [];
         this.number = number;
@@ -30,13 +35,13 @@ class  Ant {
         ant.add(body);
         return ant;
     }
-
+    // bug here  : created ant will be ant1, ant2 ...etc instead of ant3d1 etc ... 
     createBody(){
         const body = new THREE.BoxGeometry(0.01, 0.01, 0.01);
         const bodyMaterial = new THREE.MeshStandardMaterial({ color: "green" });
         const bodyMesh = new THREE.Mesh(body, bodyMaterial);
         bodyMesh.position.set(this.pos.x, this.pos.y, this.pos.z);
-        bodyMesh.name = "ant" + this.number;
+        bodyMesh.name = "ant3D" + this.number;
         return bodyMesh;
     }
 

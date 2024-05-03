@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Color } from 'three';
 import { Plane } from 'three';
 
+
 class Table {
   constructor(h,w,d) {
     this.tableElement = new THREE.Group();
@@ -16,6 +17,8 @@ class Table {
    * @returns {THREE.Group} The table
    * @memberof Table
    */
+  
+
   createTable() {
       //Create the plane where we will put the objects
       const table = new THREE.PlaneGeometry(this.size.width, this.size.height);
