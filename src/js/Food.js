@@ -25,6 +25,6 @@ export default class Food {
 
     decreaseQuantity(){
         this.quantity -= 1;
-        console.log(this.quantity);
+        //console.log(this.quantity);
     }
 }

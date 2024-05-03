@@ -169,8 +169,11 @@ function onTouchWander(event){
         scene.add(modelNest);
         var FirstAnt = new Ant(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, 0, modelAnt);
         FirstAnt.attachModel(scene);
+        FirstAnt.type = "Wandering";
+        scene.getObjectByName("ant3D" + FirstAnt.number).name = "Wanderingant3D" + FirstAnt.number;
         loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints, listObstacle, modelAnt);
         loop.typeOfLoop = "wander";
+        loop.name = "WanderLoop";
 
         window.removeEventListener('touchstart',onTouchWander);
 

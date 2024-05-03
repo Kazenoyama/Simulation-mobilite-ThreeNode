@@ -25,6 +25,7 @@ export default class Ant {
         this.eat =false;
         this.loopLaunched = false;
         this.foodEaten = null;
+        this.type = "";
     }
 
     createAnt(){
@@ -83,7 +84,14 @@ export default class Ant {
         this.position.y += speedY;
         this.position.z += speedZ;
 
-        var ant3D = scene.getObjectByName("ant3D"+this.number);
+        if(this.type == "Wandering"){
+            var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
+            //console.log(ant3D);
+        }
+        else{
+            var ant3D = scene.getObjectByName("ant3D"+this.number);
+        }
+        
         var direction = new THREE.Vector3(x, y+0.5, z);
         ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
         this.rotateModel(ant3D, direction);
@@ -120,7 +128,13 @@ export default class Ant {
         this.position.y += speedY;
         this.position.z += speedZ;
 
-        var ant3D = scene.getObjectByName("ant3D"+this.number);
+        if(this.type == "Wandering"){
+            var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
+            
+        }
+        else{
+            var ant3D = scene.getObjectByName("ant3D"+this.number);
+        }
         var direction = new THREE.Vector3(ant.position.x, ant.position.y+0.5, ant.position.z);
         ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
         this.rotateModel(ant3D, direction);
