@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import Framework from '../framework/framework.js';
 
+import Drawing from './Drawing.js';
+import Ant from './ant.js';
+import Loop from './loop.js';
+import { mod } from 'three/tsl';
+
 /* --------------- Init of the scene -------------- */
 const fw = new Framework();
 
@@ -13,7 +18,16 @@ fw.onResize(renderer, window, camera);
 
 const textures = ["./src/textures/wood_floor.jpg", "./src/textures/wall.jpg", "./src/textures/roof.jpg"];
 const table = fw.addScene(textures, fw, {width : 50, depth : 50})
-console.log(table);
+
+const fixCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Create a camera
+fixCamera.position.set(0, 50,0); //Set the position of the camera
+fixCamera.lookAt(0,0,0); //Set the camera to look at the center of the scene
+
+const raycaster = new THREE.Raycaster(); //Create a new raycaster object
+const pointer = new THREE.Vector2(); //Create a new vector2 object
+
+var activeCamera = fixCamera;
+//var activeCamera = orbitalCamera;
 
 /* -------------- Navigation Bar --------------- */
 
@@ -21,24 +35,103 @@ console.log(table);
 
 /* -------------- 3D -------------- */
 async function loadAllModel(){
-    //fw.loadModel("/src/models/ant/ant/scene.gltf", "ant");
-    fw.loadModel("/src/models/nest/raptor_nest/scene.gltf", "nest");
-    fw.loadModel("/src/models/enamel_cup/scene.gltf", "cup1");
-    fw.loadModel("/src/models/coffeeMug/scene.gltf", "cup2");
-    fw.loadModel("/src/models/tasse_cafe/scene.gltf", "cup3");
-    fw.loadModel("/src/models/handpainted_watercolor_cake/scene.gltf", "cake");
-    fw.loadModel("/src/models/bread/scene.gltf", "bread");
+    await fw.loadModel("/src/models/ant/scene.gltf", "ant");
+    await fw.loadModel("/src/models/nest/raptor_nest/scene.gltf", "nest");
+    // await fw.loadModel("/src/models/enamel_cup/scene.gltf", "cup1");
+    // await fw.loadModel("/src/models/coffeeMug/scene.gltf", "cup2");
+    // await fw.loadModel("/src/models/tasse_cafe/scene.gltf", "cup3");
+    // await fw.loadModel("/src/models/handpainted_watercolor_cake/scene.gltf", "cake");
+    // await fw.loadModel("/src/models/bread/scene.gltf", "bread");
 }
 
 await loadAllModel();
 
+/* -------------------------------- */
+
+/* -------------- Drawing -------------- */
+
+window.addEventListener('touchstart', onTouch);
+window.addEventListener('touchmove', onSwipe);
+window.addEventListener('touchend', onRelease);
 
 
+var drawing = new Drawing();
+var loop;
 
+function onTouch(event){
+    console.log("Screnn touched");
+    if(drawing.canDraw){
+        pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, activeCamera);
+        const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+        if (intersects.length > 0) {
+            drawing.addPoint(intersects[0].point);
+            drawing.drawing = true;     
+        }
+    }
+}
+
+function onSwipe(event){
+    console.log("Screen swiped");
+    if(drawing.drawing){
+        pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, activeCamera);
+        const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+        if (intersects.length > 0) {
+            drawing.addPoint(intersects[0].point);
+            drawing.drawLine(scene);
+        }
+    }
+}
+
+async function onRelease(event){
+    console.log("Screen released");
+    if(drawing.listPoints.length < 30){
+        alert("Path too short, please draw a longer path");
+        for(drawing.listLine.length; drawing.listLine.length > 0;){
+            drawing.deleteLine(scene);
+        }
+        drawing.listLine = [];
+        drawing.listPoints = [];
+        drawing.drawing = false;
+        return;
+    }
+
+    if(drawing.canDraw){
+        drawing.drawing = false;
+        drawing.canDraw = false;
+        console.log("Drawing finished");
+    }
+
+    var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, scene.getObjectByName("ant"), fw);
+    var listObstacle = [];
+    await FirstAnt.createAnt(0);
+
+    loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints,listObstacle, scene.getObjectByName("ant"), fw);
+
+    loop.typeOfLoop = "normal";
+
+    await fw.create_copy("nest", 3)
+    scene.getObjectByName("nest_copy0").position.set(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z);
+
+    window.removeEventListener('touchstart',onTouch);
+    window.removeEventListener('touchmove',onSwipe);
+    window.removeEventListener('touchend',onRelease);
+
+
+}
+
+
+/* ----------------------------------- */
 
 function animate() {
     requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+    if(loop != undefined){
+        loop.launchLoop(scene);
+    }
+    renderer.render(scene, activeCamera);
 }
 
 animate();
@@ -311,62 +404,6 @@ animate();
 // var numfood = 0;
 
 // var listObstacle = [];
-
-// async function loadAllModel(){
-//     const loader = new GLTFLoader();
-//     loader.load('/src/modele/ant/ant/scene.gltf', function(gltf){
-//         gltf.scene.scale.set(0.01,0.01,0.01);
-//         gltf.scene.name = "OriginalAnt";
-//         modelAnt = gltf.scene;
-//         console.log("Ant model loaded")
-//     })
-
-//     loader.load('/src/modele/nest/raptor_nest/scene.gltf', function(gltf){
-//         gltf.scene.scale.set(3,3,3);
-//         gltf.scene.position.set(0,0,0);
-//         modelNest = gltf.scene;
-//         console.log("Nest model loaded")
-//     })
-
-//     loader.load("/src/modele/enamel_cup/scene.gltf", function(gltf){
-//         gltf.scene.scale.set(0.01,0.01,0.01);
-//         gltf.scene.position.set(0,0,0);
-//         modelCup1 = gltf.scene;
-//         console.log("Cup 1 model loaded")
-//     });
-
-//     loader.load("/src/modele/coffeeMug/scene.gltf", function(gltf){
-//         gltf.scene.scale.set(0.01,0.01,0.01);
-//         gltf.scene.position.set(0,0,0);
-//         modelCup2 = gltf.scene;
-//         console.log("Cup 2 model loaded")
-//     });
-
-//     loader.load("/src/modele/tasse_cafe/scene.gltf", function(gltf){
-//         gltf.scene.scale.set(0.01,0.01,0.01);
-//         gltf.scene.position.set(0,0,0);
-//         modelCup3 = gltf.scene;
-//         console.log("Cup 3 model loaded")
-//     });
-
-//     loader.load("/src/modele/handpainted_watercolor_cake/scene.gltf", function(gltf){
-//         gltf.scene.scale.set(1,1,1);
-//         gltf.scene.position.set(0,0,0);
-//         gltf.scene.name = "cake";
-//         cake = gltf.scene;
-//         console.log("Cake model loaded")
-//     });
-
-    
-//     loader.load("/src/modele/bread/scene.gltf", function(gltf){
-//         gltf.scene.scale.set(1,1,1);
-//         gltf.scene.position.set(0,0,0);
-//         gltf.scene.name = "bread";
-//         bread = gltf.scene;
-//         console.log("Bread model loaded")
-//     });
-
-// }
 
 // var activeCamera = fixCamera; //Set the active camera to the orbit camera
 

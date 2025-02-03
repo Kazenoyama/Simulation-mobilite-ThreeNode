@@ -141,7 +141,7 @@ class Framework {
      * @param {string} name - The name of the model to copy.
      * @param {number} [size=1] - The scale factor to apply to the copied model.
      */
-    async create_copy(name, size = 1, timeToWait=100) {
+    async create_copy(name, size = 1, timeToWait=100, number = 0) {
         let scene = window.scene;
         const copy = scene.getObjectByName(name).clone();
 
@@ -152,12 +152,19 @@ class Framework {
         copy.scale.set(size, size, size);
         copy.visible = true;
 
+        
         let i=0
-        for(let j=0; j<scene.children.length; j++) {
-            if(scene.children[j].name.includes(name+"_copy")) {
+        if(number !== 0){
+            i = number;
+        }
+        else{
+            for(let j=0; j<scene.children.length; j++) {
+                if(scene.children[j].name.includes(name+"_copy")) {
                 i++;
+                }
             }
         }
+        
         copy.name = name + "_copy" + i;
         scene.add(copy);
 

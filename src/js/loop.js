@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import Ant from './ant.js';
 
 export default class Loop {
-    constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt){
+    constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt, fw){
         console.log("Loop created");
+        this.fw = fw;
 
         this.name;
         this.antStart = FirstAnt;
@@ -63,9 +64,9 @@ export default class Loop {
         }
     };
 
-    actionForAnt(scene){
-        if(!this.stop) this.addAnt(scene);
-        //this.updateAnt();
+    async actionForAnt(scene){
+        if(!this.stop) await this.addAnt(scene);
+        this.updateAnt();
         this.follow(scene);
         for(var i =0; i < this.listA.length; i++){this.deleteAnt(i,scene);}
         if(this.listA.length <= 0){
@@ -168,7 +169,7 @@ export default class Loop {
         }
     }
 
-    launcIntervall(){
+    launchIntervall(){
         setInterval(() => {
             for(var i = 0; i < this.listA.length; i++){
                 
@@ -208,8 +209,7 @@ export default class Loop {
     deleteAnt(i,scene){
         if(this.listA[i].type != "Wandering"){
             if(this.listA[i].distance(this.finish.x, this.finish.y, this.finish.z) < 0.1){
-                scene.remove(scene.getObjectByName("ant3D"+this.listA[i].number)); 
-                //scene.remove(scene.getObjectByName("ant"+this.listA[i].number)); 
+                this.fw.delete_copy("ant_copy"+this.listA[i].number);
                 this.listA.splice(i,1);
             }
         }
@@ -220,11 +220,11 @@ export default class Loop {
         }
     }
 
-    addAnt(scene){
+    async addAnt(scene){
         if(this.typeOfLoop == 'normal'){
             if(this.listA.length < this.MaxAnt && this.listA[this.listA.length-1].distance(this.start.x, this.start.y, this.start.z) > 4){
-                this.listA.push(new Ant(this.start.x, this.start.y +0.5, this.start.z, this.counter, this.modelAnt));
-                this.listA[this.listA.length-1].attachModel(scene);
+                this.listA.push(new Ant(this.start.x, this.start.y +0.5, this.start.z, this.modelAnt, this.fw));
+                await this.listA[this.listA.length-1].createAnt(this.counter);
                 this.counter++;
                 if(this.foodToEat != null){
                     this.foodToEat.decreaseQuantity();
