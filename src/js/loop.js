@@ -6,7 +6,6 @@ export default class Loop {
     constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt, fw){
         console.log("Loop created");
         this.fw = fw;
-        console.log("The number of the ant who created it is : " + FirstAnt.number);
 
         this.name;
         this.antStart = FirstAnt;
@@ -20,6 +19,7 @@ export default class Loop {
         this.MaxWanderingAnt = 4;
         this.listO = listObstacle;
         this.counter = 1 + FirstAnt.number * 1000;
+        console.log(this.listO.length);
         
         this.typeOfLoop;
         this.intervallLaunched = false;
@@ -35,7 +35,7 @@ export default class Loop {
     launchLoop(scene){
         switch(this.typeOfLoop){
             case 'normal':
-                console.log("Normal loop launched");
+                //console.log("Normal loop launched");
                 this.mainLoop(scene);
                 break;
             case 'wander':
@@ -144,9 +144,7 @@ export default class Loop {
                 }
             }
             
-        };
-        //console.log(this.listA[0].pathTaken.length);
-   
+        };   
     }
 
     deleteFood(scene){
@@ -241,8 +239,6 @@ export default class Loop {
                 await ant.createAnt(this.counter);
                 this.counter++;
                 ant.type = "Wandering";
-                
-                //this.counter++;
             }
         }
     }

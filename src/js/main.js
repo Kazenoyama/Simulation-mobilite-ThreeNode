@@ -5,6 +5,7 @@ import Drawing from './Drawing.js';
 import Ant from './ant.js';
 import Loop from './loop.js';
 import Food from './Food.js';
+import Obstacle from './obstacle.js';
 
 /* --------------- Init of the scene -------------- */
 const fw = new Framework();
@@ -26,6 +27,8 @@ const raycaster = new THREE.Raycaster(); //Create a new raycaster object
 const pointer = new THREE.Vector2(); //Create a new vector2 object
 
 var activeCamera = fixCamera;
+
+var listObstacle = [];
 
 /* -------------- Navigation Bar --------------- */
 
@@ -66,52 +69,54 @@ async function loadAllModel(){
 
 await loadAllModel();
 
-// function placeObstacle(event){
-//     if(drawing.canDraw){
-//         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-//         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+async function placeObstacle(event){
+    if(drawing.canDraw){
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-//         raycaster.setFromCamera(pointer, activeCamera);
-//         const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
-//         if(intersects.length > 0){
-//             var position = intersects[0].point;
-//             var scale = 1;
-//             var radius = 3;
-//             var typeOfMug;
+        raycaster.setFromCamera(pointer, activeCamera);
+        const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
+        if(intersects.length > 0){
+            var position = intersects[0].point;
+            var scale = 1;
+            var radius = 3;
+            var typeOfMug;
             
-//             var randoNumber = Math.floor(Math.random() * 3);
-//             switch(randoNumber){
-//                 case 0:
-//                 typeOfMug = scene.getObjectByName("cup1");
-//                 scale = 1;
-//                 position.y += 1.2;
-//                 radius = 3;
-//                 break;
-//             case 1:
-//                 typeOfMug = scene.getObjectByName("cup2");
-//                 scale = 0.03;
-//                 position.y -= 0.5;
-//                 radius = 4;
-//                 break;
-//             case 2:
-//                 typeOfMug = scene.getObjectByName("cup3");
-//                 scale = 20;
-//                 position.y += 1.05;
-//                 radius = 3;
-//                 break;
-//             default:
-//                 typeOfMug = scene.getObjectByName("cup1");
-//                 radius = 3;
-//                 position.y += 1.2;
-//                 scale = 1;
-//                 break;
-//             }
+            var randoNumber = Math.floor(Math.random() * 3);
+            switch(randoNumber){
+                case 0:
+                typeOfMug = "cup1"; 
+                scale = 1;
+                position.y += 1.2;
+                radius = 3;
+                break;
+            case 1:
+                typeOfMug ="cup2";
+                scale = 0.03;
+                position.y -= 0.5;
+                radius = 4;
+                break;
+            case 2:
+                typeOfMug = "cup3";
+                scale = 20;
+                position.y += 1.05;
+                radius = 3;
+                break;
+            default:
+                typeOfMug = "cup1";
+                radius = 3;
+                position.y += 1.2;
+                scale = 1;
+                break;
+            }
 
-//             listObstacle.push(new Obstacle(position, scale, typeOfMug));
-//             listObstacle[listObstacle.length-1].placeObstacle(scene);
-//         }
-//     }
-// }
+            var mug = await fw.create_copy(typeOfMug, scale);
+            mug.position.set(position.x, position.y, position.z);
+
+            listObstacle.push(new Obstacle(position, typeOfMug));
+        }
+    }
+}
 
 var numfood = 0;
 
@@ -133,8 +138,6 @@ async function placeFood(event){
                 var food = await fw.create_copy("bread", 0.5);
                 var posY = 1.5;
                 food.position.set(position.x, position.y+posY, position.z);
-                // var food = await fw.create_copy("cake", 1);
-                // food.position.set(position.x, position.y, position.z);
                 break;
             default:
                 var food = await fw.create_copy("cake", 1);
@@ -154,6 +157,7 @@ async function placeFood(event){
 window.addEventListener('touchstart', onTouch);
 window.addEventListener('touchmove', onSwipe);
 window.addEventListener('touchend', onRelease);
+window.addEventListener('click', placeObstacle);
 
 var drawing = new Drawing();
 var loop;
@@ -206,7 +210,7 @@ async function onRelease(event){
     }
 
     var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, scene.getObjectByName("ant"), fw);
-    var listObstacle = [];
+    // var listObstacle = [];
     await FirstAnt.createAnt(0);
 
     loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints,listObstacle, scene.getObjectByName("ant"), fw);
@@ -248,7 +252,7 @@ export function changeMethode(){
     window.removeEventListener('touchstart',onTouch);
     window.removeEventListener('touchmove',onSwipe);
     window.removeEventListener('touchend',onRelease);
-    // window.removeEventListener('click',placeObstacle);-
+    window.removeEventListener('click',placeObstacle);-
     initWander();
 }
 
@@ -265,7 +269,7 @@ async function onTouchWander(event){
         var FirstAnt = new Ant(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, scene.getObjectByName("ant"), fw);
         await FirstAnt.createAnt(0);
         FirstAnt.type = "Wandering";
-        var listObstacle = [];
+
         loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints, listObstacle,  scene.getObjectByName("ant"), fw);
         loop.typeOfLoop = "wander";
         loop.name = "WanderLoop";
@@ -291,21 +295,5 @@ function animate() {
 
 animate();
 
-
-
-
-
-
-// var modelAnt;
-// var modelNest;
-// var modelCup1;
-// var modelCup2;
-// var modelCup3;
-// var cake;
-// var bread;
-
-// var numfood = 0;
-
-// var listObstacle = [];
 
 

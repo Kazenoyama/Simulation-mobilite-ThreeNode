@@ -106,20 +106,13 @@ export default class Ant{
                 speedZ = dz;
             }
 
-            // speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
+            speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
         }
 
         this.position.x += speedX;
         this.position.y += speedY;
         this.position.z += speedZ;
 
-        // if(this.type == "Wandering"){
-        //     var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
-            
-        // }
-        // else{
-        //     var ant3D = scene.getObjectByName("ant3D"+this.number);
-        // }
         var ant = scene.getObjectByName("ant_copy"+this.number);
         // var direction = new THREE.Vector3(ant.position.x, ant.position.y, ant.position.z);
         var direction = new THREE.Vector3(0,10,0);
@@ -182,29 +175,31 @@ export default class Ant{
         } 
     }
 
+    avoidObstacle(sX, sY, sZ, listO){
+        for(var i = 0; i < listO.length; i++){
+            var dx = listO[i].position.x - this.position.x;
+            var dz = listO[i].position.z - this.position.z;
+            if(Math.abs(dx) < 2 && Math.abs(dz) < 2){
+                if(dx < 0 && dz >= 0){
+                    sX -= sX;
+                    sZ = sZ;
+                }
+                else{
+                    sX = dx;
+                    sZ -= dz;
+                }
+            }
+        }
+        return sX, sY, sZ;
+    }
+
 }
 
 // export default class Ant {
 
 
 
-//     avoidObstacle(sX, sY, sZ, listO){
-//         for(var i = 0; i < listO.length; i++){
-//             var dx = listO[i].position.x - this.position.x;
-//             var dz = listO[i].position.z - this.position.z;
-//             if(Math.abs(dx) < 2 && Math.abs(dz) < 2){
-//                 if(dx < 0 && dz >= 0){
-//                     sX -= sX;
-//                     sZ = sZ;
-//                 }
-//                 else{
-//                     sX = dx;
-//                     sZ -= dz;
-//                 }
-//             }
-//         }
-//         return sX, sY, sZ;
-//     }
+
 
 
 
