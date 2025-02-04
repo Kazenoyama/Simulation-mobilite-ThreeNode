@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Framework from '../framework/framework';
 
 export let antSettings = {
-    speed: 0.5,
+    speed: 0.2,
     minDistance: 4
 };
 
@@ -79,106 +79,114 @@ export default class Ant{
         
         var direction = new THREE.Vector3(x, y+0.5, z);
         ant.position.set(this.position.x, this.position.y+0.5, this.position.z);
-        // this.rotateModel(ant, direction);
+        this.rotateModel(ant, direction);
     }
 
     followPrevious(ant,listO, scene){
-    var dx = ant.position.x - this.position.x;
-    var dy = ant.position.y - this.position.y;
-    var dz = ant.position.z - this.position.z;
-    var speedX, speedY, speedZ;
-    var distanceToAnt = this.distance(ant.position.x, ant.position.y, ant.position.z);
-    if(distanceToAnt < this.minDistance){
-        speedX = 0;
-        speedY = 0;
-        speedZ = 0;
-    }
-    else{
-        var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-        if(maxDistance > this.speed){
-            speedX = dx * this.speed / maxDistance;
-            speedY = dy * this.speed / maxDistance;
-            speedZ = dz * this.speed / maxDistance;
+        var dx = ant.position.x - this.position.x;
+        var dy = ant.position.y - this.position.y;
+        var dz = ant.position.z - this.position.z;
+        var speedX, speedY, speedZ;
+        var distanceToAnt = this.distance(ant.position.x, ant.position.y, ant.position.z);
+        if(distanceToAnt < this.minDistance){
+            speedX = 0;
+            speedY = 0;
+            speedZ = 0;
         }
         else{
-            speedX = dx;
-            speedY = dy;
-            speedZ = dz;
+            var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+            if(maxDistance > this.speed){
+                speedX = dx * this.speed / maxDistance;
+                speedY = dy * this.speed / maxDistance;
+                speedZ = dz * this.speed / maxDistance;
+            }
+            else{
+                speedX = dx;
+                speedY = dy;
+                speedZ = dz;
+            }
+
+            // speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
         }
 
-        // speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
+        this.position.x += speedX;
+        this.position.y += speedY;
+        this.position.z += speedZ;
+
+        // if(this.type == "Wandering"){
+        //     var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
+            
+        // }
+        // else{
+        //     var ant3D = scene.getObjectByName("ant3D"+this.number);
+        // }
+        var ant = scene.getObjectByName("ant_copy"+this.number);
+        // var direction = new THREE.Vector3(ant.position.x, ant.position.y, ant.position.z);
+        var direction = new THREE.Vector3(0,10,0);
+        ant.position.set(this.position.x, this.position.y+0.5, this.position.z);
+        this.rotateModel(ant, direction);
     }
 
-    this.position.x += speedX;
-    this.position.y += speedY;
-    this.position.z += speedZ;
+    rotateModel(ant3D, direction){
+        //TODO: Rotate the model to face the direction
+    }
 
-    // if(this.type == "Wandering"){
-    //     var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
-        
-    // }
-    // else{
-    //     var ant3D = scene.getObjectByName("ant3D"+this.number);
-    // }
-    var ant = scene.getObjectByName("ant_copy"+this.number);
-    var direction = new THREE.Vector3(ant.position.x, ant.position.y+0.5, ant.position.z);
-    ant.position.set(this.position.x, this.position.y+0.5, this.position.z);
-    // this.rotateModel(ant, direction);
-}
+    wander(scene){
+        if(this.retracePath){
+            this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
+            if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
+                this.pathTaken.pop();    
+            }
+            if((this.pathTaken.length <= 1 && !this.arrived)|| !this.callback){
+                this.arrived = true;
+            }
+        }
+        else{
+            var targetX = this.targetDirection.x; // Calculate target X position
+            var targetZ = this.targetDirection.z; // Calculate target Z positichaon
+
+            if(targetX > 24 ){
+                targetX = targetX - (targetX - 24);
+                targetZ = targetZ;
+            }
+            if(targetX < -24){
+                targetX = targetX - (targetX + 24);
+                targetZ = targetZ;
+            }
+            if(targetZ > 24){
+                targetZ = targetZ - (targetZ - 24);
+                targetX = targetX;
+            }
+            if(targetZ < -24){
+                targetZ = targetZ - (targetZ + 24);
+                targetX = targetX;
+            }
+
+            this.followN(targetX, this.position.y, targetZ, scene); // Call followN with the modified target position
+            this.addToPathTaken(this.position.x, this.position.y, this.position.z); // Add the current position to the path taken
+        }
+
+    }
+
+    addToPathTaken(x,y,z){
+        if(this.pathTaken.length <= 0){
+            this.pathTaken.push({x:x, y:y, z:z});
+            this.goodPath.push({x:x, y:y, z:z});
+        }
+        if(this.pathTaken[this.pathTaken.length-1].x != x &&
+            this.pathTaken[this.pathTaken.length-1].z != z &&
+            (Math.abs(this.pathTaken[this.pathTaken.length-1].x - x) > 4 ||
+            Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
+            this.pathTaken.push({x:x, y:y, z:z});
+            this.goodPath.push({x:x, y:y, z:z});
+        } 
+    }
 
 }
 
 // export default class Ant {
 
-//     followPrevious(ant,listO, scene){
-//         var dx = ant.position.x - this.position.x;
-//         var dy = ant.position.y - this.position.y;
-//         var dz = ant.position.z - this.position.z;
-//         var speedX, speedY, speedZ;
-//         var distanceToAnt = this.distance(ant.position.x, ant.position.y, ant.position.z);
-//         if(distanceToAnt < this.minDistance){
-//             speedX = 0;
-//             speedY = 0;
-//             speedZ = 0;
-//         }
-//         else{
-//             var maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-//             if(maxDistance > this.speed){
-//                 speedX = dx * this.speed / maxDistance;
-//                 speedY = dy * this.speed / maxDistance;
-//                 speedZ = dz * this.speed / maxDistance;
-//             }
-//             else{
-//                 speedX = dx;
-//                 speedY = dy;
-//                 speedZ = dz;
-//             }
 
-//             speedX, speedY, speedZ = this.avoidObstacle(speedX, speedY, speedZ, listO);
-//         }
-
-//         this.position.x += speedX;
-//         this.position.y += speedY;
-//         this.position.z += speedZ;
-
-//         if(this.type == "Wandering"){
-//             var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
-            
-//         }
-//         else{
-//             var ant3D = scene.getObjectByName("ant3D"+this.number);
-//         }
-//         var direction = new THREE.Vector3(ant.position.x, ant.position.y+0.5, ant.position.z);
-//         ant3D.position.set(this.position.x, this.position.y+0.5, this.position.z);
-//         this.rotateModel(ant3D, direction);
-//     }
-
-//     rotateModel(ant3D, direction){
-//         const lookAtVector = new THREE.Vector3().copy(direction).sub(ant3D.position);
-//         ant3D.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0), lookAtVector.clone().normalize());
-//         ant3D.rotateY(Math.PI);
-//         ant3D.updateMatrixWorld(true);
-//     }
 
 //     avoidObstacle(sX, sY, sZ, listO){
 //         for(var i = 0; i < listO.length; i++){
@@ -198,58 +206,7 @@ export default class Ant{
 //         return sX, sY, sZ;
 //     }
 
-//     wander(scene){
-//         if(this.retracePath){
-//             this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
-//             if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
-//                 this.pathTaken.pop();    
-//             }
-//             if((this.pathTaken.length <= 1 && !this.arrived)|| !this.callback){
-//                 this.arrived = true;
-//             }
-//         }
-//         else{
-//             var targetX = this.targetDirection.x; // Calculate target X position
-//             var targetZ = this.targetDirection.z; // Calculate target Z positichaon
 
-//             if(targetX > 24 ){
-//                 targetX = targetX - (targetX - 24);
-//                 targetZ = targetZ;
-//             }
-//             if(targetX < -24){
-//                 targetX = targetX - (targetX + 24);
-//                 targetZ = targetZ;
-//             }
-//             if(targetZ > 24){
-//                 targetZ = targetZ - (targetZ - 24);
-//                 targetX = targetX;
-//             }
-//             if(targetZ < -24){
-//                 targetZ = targetZ - (targetZ + 24);
-//                 targetX = targetX;
-//             }
-
-            
-
-//             this.followN(targetX, this.position.y, targetZ, scene); // Call followN with the modified target position
-//             this.addToPathTaken(this.position.x, this.position.y, this.position.z); // Add the current position to the path taken
-//         }
-
-//     }
-
-//     addToPathTaken(x,y,z){
-//         if(this.pathTaken.length <= 0){
-//             this.pathTaken.push({x:x, y:y, z:z});
-//             this.goodPath.push({x:x, y:y, z:z});
-//         }
-//         if(this.pathTaken[this.pathTaken.length-1].x != x &&
-//             this.pathTaken[this.pathTaken.length-1].z != z &&
-//             (Math.abs(this.pathTaken[this.pathTaken.length-1].x - x) > 4 ||
-//             Math.abs(this.pathTaken[this.pathTaken.length-1].z - z) > 4)){
-//             this.pathTaken.push({x:x, y:y, z:z});
-//             this.goodPath.push({x:x, y:y, z:z});
-//         } 
-//     }
 
 //     updateParameter(){
 //         this.speed = antSettings.speed;

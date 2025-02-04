@@ -6,6 +6,7 @@ export default class Loop {
     constructor(FirstAnt, start, finish, listPoints,listObstacle, modelAnt, fw){
         console.log("Loop created");
         this.fw = fw;
+        console.log("The number of the ant who created it is : " + FirstAnt.number);
 
         this.name;
         this.antStart = FirstAnt;
@@ -16,9 +17,9 @@ export default class Loop {
         this.listA = [];
         this.listA.push(FirstAnt);
         this.MaxAnt = 50;
-        this.MaxWanderingAnt = 3;
+        this.MaxWanderingAnt = 4;
         this.listO = listObstacle;
-        this.counter = 1;
+        this.counter = 1 + FirstAnt.number * 1000;
         
         this.typeOfLoop;
         this.intervallLaunched = false;
@@ -29,13 +30,12 @@ export default class Loop {
         this.stop = false;
         this.deleteLoop = false;
         this.foodToEat = null;
-
     }
 
     launchLoop(scene){
         switch(this.typeOfLoop){
             case 'normal':
-                //console.log("Launch normal loop")
+                console.log("Normal loop launched");
                 this.mainLoop(scene);
                 break;
             case 'wander':
@@ -48,19 +48,19 @@ export default class Loop {
         }
     }
 
-    mainLoop(scene){
+    async mainLoop(scene){
         //Follow the path
         if(this.listP.length > 0){
             this.listA[0].followN(this.listP[0].x, this.listP[0].y, this.listP[0].z, scene);
             if(this.listA[0].position.x == this.listP[0].x  && this.listA[0].position.z == this.listP[0].z && this.listA[0].position.y == this.listP[0].y){
                 this.listP.shift();
             }
-            this.actionForAnt(scene);
+            await this.actionForAnt(scene);
             
         }
         //Follow the previous ant created
         else{
-            this.actionForAnt(scene);
+            await this.actionForAnt(scene);
         }
     };
 
@@ -74,21 +74,21 @@ export default class Loop {
         }
     }
 
-    wanderLoop(scene){
+    async wanderLoop(scene){
         this.addAnt(scene);
+
         this.deleteFood(scene);
-        //this.updateAnt();
+
         if(!this.intervallLaunched){
-            this.launcIntervall(); 
+            this.launchIntervall(); 
         }
         for(var i =0 ; i < this.listA.length; i++){
             if(this.listA[i].pathTaken.length >= this.maxPath){
                 this.listA[i].retracePath = true;
             }
-            //console.log("Ant number" +this.listA[i].number +" is recalling back " + this.listA[i].retracePath);
-            
+
             for(var f = 0; f < this.listF.length; f++){
-                if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) <= 0.5 && this.listA[i].eat == false){
+                if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) <= 1 && this.listA[i].eat == false){
                     this.listA[i].foodEaten = this.listF[f];
                     this.listA[i].retracePath = true;
                     this.listA[i].eat = true;
@@ -96,9 +96,9 @@ export default class Loop {
                 else if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) < this.listF[f].radius && this.listA[i].retracePath == false){
                     this.listA[i].targetDirection = {x: this.listF[f].position.x, y: 0, z: this.listF[f].position.z};
                 }
-                else{
-                    //this.listF[f].growingRadius();
-                }
+                // else{
+                //     //this.listF[f].growingRadius();
+                // }
             }
             if(this.listA[i].loopLaunched == false){
                 this.listA[i].wander(scene);
@@ -108,7 +108,7 @@ export default class Loop {
             if(this.listA[i].eat && this.listA[i].pathTaken.length <= 1 && this.listA[i].loopLaunched == false){
                 var finish = {x: this.listA[i].goodPath[this.listA[i].goodPath.length-1].x, y: this.listA[i].goodPath[this.listA[i].goodPath.length-1].y, z: this.listA[i].goodPath[this.listA[i].goodPath.length-1].z};
                 var start = {x: this.listA[i].goodPath[0].x, y: this.listA[i].goodPath[0].y, z: this.listA[i].goodPath[0].z};
-                this.listLoop.push(new Loop(this.listA[i], start, finish, this.listA[i].goodPath, this.listO, this.modelAnt));
+                this.listLoop.push(new Loop(this.listA[i], start, finish, this.listA[i].goodPath, this.listO, this.modelAnt, this.fw));
                 this.listLoop[this.listLoop.length -1].typeOfLoop = 'normal';
                 this.listLoop[this.listLoop.length -1].name = "loop"+this.listA[i].number;
                 this.listLoop[this.listLoop.length -1].foodToEat = this.listA[i].foodEaten;
@@ -117,7 +117,6 @@ export default class Loop {
 
             if(this.listLoop.length > 0){
                 for(var l = 0; l < this.listLoop.length; l++){
-                    //this.listLoop[l].foodToEat = this.listA[i].foodEaten;
                     this.listLoop[l].launchLoop(scene);
                     if(this.listLoop[l].deleteLoop){
                         console.log("Loop deleted");
@@ -220,7 +219,7 @@ export default class Loop {
         }
     }
 
-    async addAnt(scene){
+    async addAnt(){
         if(this.typeOfLoop == 'normal'){
             if(this.listA.length < this.MaxAnt && this.listA[this.listA.length-1].distance(this.start.x, this.start.y, this.start.z) > 4){
                 this.listA.push(new Ant(this.start.x, this.start.y +0.5, this.start.z, this.modelAnt, this.fw));
@@ -237,12 +236,13 @@ export default class Loop {
 
         else{
             if(this.listA.length < this.MaxWanderingAnt && this.listA[this.listA.length-1].distance(this.start.x, this.start.y, this.start.z) > 4){
-                var ant = new Ant(this.start.x, this.start.y +0.5, this.start.z, this.counter, this.modelAnt);
-                ant.attachModel(scene);
-                ant.type = "Wandering";
-                scene.getObjectByName("ant3D"+ant.number).name = "Wanderingant3D"+ant.number;
+                var ant = new Ant(this.start.x, this.start.y +0.5, this.start.z,this.modelAnt, this.fw);
                 this.listA.push(ant);
+                await ant.createAnt(this.counter);
                 this.counter++;
+                ant.type = "Wandering";
+                
+                //this.counter++;
             }
         }
     }

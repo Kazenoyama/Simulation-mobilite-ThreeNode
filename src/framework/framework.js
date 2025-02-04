@@ -351,10 +351,10 @@ class Framework {
 
         camera.position.z = 60;
         camera.position.y = 50;
-        const cameraOrbital = new OrbitControls(camera, renderer.domElement);
+        var cameraOrbital = new OrbitControls(camera, renderer.domElement);
         cameraOrbital.update();
 
-        return {"scene": scene, "camera": camera, "renderer": renderer, "cameraOrbital": cameraOrbital};
+        return {"scene": scene, "camera": camera, "renderer": renderer, "orbitalCamera": cameraOrbital};
 
     }
 
