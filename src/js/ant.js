@@ -67,14 +67,6 @@ export default class Ant{
         this.position.x += speedX;
         this.position.y += speedY;
         this.position.z += speedZ;
-
-        // if(this.type == "Wandering"){
-        //     var ant3D = scene.getObjectByName("Wanderingant3D"+this.number);
-        //     //console.log(ant3D);
-        // }
-        // else{
-        //     var ant3D = scene.getObjectByName("ant3D"+this.number);
-        // }
         var ant = scene.getObjectByName("ant_copy"+this.number);
         
         var direction = new THREE.Vector3(x, y+0.5, z);
@@ -193,20 +185,9 @@ export default class Ant{
         return sX, sY, sZ;
     }
 
+    updateParameter(){
+        this.speed = antSettings.speed;
+        this.minDistance = antSettings.minDistance;
+    }
+
 }
-
-// export default class Ant {
-
-
-
-
-
-
-
-//     updateParameter(){
-//         this.speed = antSettings.speed;
-//         this.minDistance = antSettings.minDistance;
-//     }
-
-
-// }

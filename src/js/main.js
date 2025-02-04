@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Framework from '../framework/framework.js';
 
 import Drawing from './Drawing.js';
-import Ant from './ant.js';
+import Ant, { antSettings } from './ant.js';
 import Loop from './loop.js';
 import Food from './Food.js';
 import Obstacle from './obstacle.js';
@@ -30,7 +30,48 @@ var activeCamera = fixCamera;
 
 var listObstacle = [];
 
+window.addEventListener("keydown" , function(event){
+    if(event.key == "w"){
+        activeCamera = fixCamera;
+    }
+
+    if(event.key == "x"){
+        activeCamera = camera;
+        camera.position.set(0, 60, 50);
+        camera.lookAt(0,0,0);
+    }
+});
+
 /* -------------- Navigation Bar --------------- */
+
+fw.addButtonToNavbar("Restart", () => location.reload());
+fw.addButtonToNavbar("Pause", () => {
+    if(loop != undefined){
+    loop.stop = !loop.stop;
+    document.getElementById('navbar0').children[2].textContent = loop.stop ? "Play" : "Pause";
+}});
+fw.addButtonToNavbar("Draw", changeToDraw);
+fw.addButtonToNavbar("Wander", changeMethode);
+var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
+fw.addDropdownToNavbar("Speed", dropdownList);
+fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
+
+export function changeSpeedPlus(){ antSettings.speed += 0.2;}
+
+export function changeSpeedMinus(){antSettings.speed -= 0.2;
+    if(antSettings.speed < 0){
+        antSettings.speed = 0.2;
+    }
+
+}
+
+export function changeDistancePlus(){antSettings.minDistance += 1;}
+
+export function changeDistanceMinus(){
+    antSettings.minDistance -= 1;
+    if(antSettings.minDistance <= 0) antSettings.minDistance = 1;
+}
+
 
 /* --------------------------------------------- */
 
@@ -159,11 +200,25 @@ window.addEventListener('touchmove', onSwipe);
 window.addEventListener('touchend', onRelease);
 window.addEventListener('click', placeObstacle);
 
+function changeToDraw(){
+    if(drawing.canDraw){
+        console.log("Change to drawing a path");
+        window.removeEventListener('touchstart',onTouchWander);
+        window.addEventListener('touchstart',onTouch);
+        window.addEventListener('touchmove',onSwipe);
+        window.addEventListener('touchend',onRelease);
+        window.addEventListener('click', placeObstacle);
+    }
+    else{
+        console.log("Can't change mode while running the simulation")
+    }
+}
+
 var drawing = new Drawing();
 var loop;
 
 function onTouch(event){
-    console.log("Screnn touched");
+    //console.log("Screnn touched");
     if(drawing.canDraw){
         pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
@@ -177,7 +232,7 @@ function onTouch(event){
 }
 
 function onSwipe(event){
-    console.log("Screen swiped");
+    //console.log("Screen swiped");
     if(drawing.drawing){
         pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
@@ -191,7 +246,7 @@ function onSwipe(event){
 }
 
 async function onRelease(event){
-    console.log("Screen released");
+    //console.log("Screen released");
     if(drawing.listPoints.length < 30){
         //alert("Path too short, please draw a longer path");
         for(drawing.listLine.length; drawing.listLine.length > 0;){
@@ -210,7 +265,6 @@ async function onRelease(event){
     }
 
     var FirstAnt = new Ant(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z, scene.getObjectByName("ant"), fw);
-    // var listObstacle = [];
     await FirstAnt.createAnt(0);
 
     loop = new Loop(FirstAnt, drawing.listPoints[0], drawing.listPoints[drawing.listPoints.length-1], drawing.listPoints,listObstacle, scene.getObjectByName("ant"), fw);
@@ -234,26 +288,21 @@ async function onRelease(event){
 
 function initWander(){
     window.addEventListener('touchstart',onTouchWander);
-    window.addEventListener("keydown" , function(event){
-        if(event.key == "w"){
-            activeCamera = fixCamera;
-        }
-
-        if(event.key == "x"){
-            activeCamera = camera;
-            camera.position.set(0, 60, 50);
-            camera.lookAt(0,0,0);
-        }
-    });
+    
 }
 
 export function changeMethode(){
-    console.log("Change the methode");
-    window.removeEventListener('touchstart',onTouch);
-    window.removeEventListener('touchmove',onSwipe);
-    window.removeEventListener('touchend',onRelease);
-    window.removeEventListener('click',placeObstacle);-
-    initWander();
+    if(drawing.canDraw){
+        console.log("Change to wander mode");
+        window.removeEventListener('touchstart',onTouch);
+        window.removeEventListener('touchmove',onSwipe);
+        window.removeEventListener('touchend',onRelease);
+        window.removeEventListener('click',placeObstacle);-
+        initWander();
+    }
+    else{
+        console.log("Can't change mode while running the simulation");
+    }
 }
 
 async function onTouchWander(event){
@@ -288,7 +337,8 @@ async function onTouchWander(event){
 function animate() {
     requestAnimationFrame(animate);
     if(loop != undefined){
-        loop.launchLoop(scene);
+        if(!loop.stop){loop.launchLoop(scene);}
+        
     }
     renderer.render(scene, activeCamera);
 }
