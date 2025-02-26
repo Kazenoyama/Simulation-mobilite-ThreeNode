@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import Framework from '../../framework/js/framework.js';
+import Framework from '../framework/framework';
 
 export let antSettings = {
     speed: 0.2,
@@ -32,7 +32,7 @@ export default class Ant{
 
     async createAnt(counter){
         console.log('createAnt');
-        var ant = await this.fw.create_copy("ant", {size :0.015,timeToWait : 200,counter : counter});
+        var ant = await this.fw.create_copy("ant", 0.015, 200, counter);
         ant.position.set(this.position.x, this.position.y+20, this.position.z );
         this.number = ant.name.split("ant_copy")[1];
         return ant;
