@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import Framework from '../framework/framework.js';
+import Framework from '../../framework/js/framework.js';
 
 import Drawing from './Drawing.js';
 import Ant, { antSettings } from './ant.js';
@@ -14,10 +14,7 @@ const scene = fw.mainParameters.scene;
 const renderer = fw.mainParameters.renderer;
 const camera = fw.mainParameters.camera;
 
-fw.onResize(renderer, window, camera);
-
-const textures = ["./src/textures/wood_floor.jpg", "./src/textures/wall.jpg", "./src/textures/roof.jpg"];
-const table = fw.addScene(textures, fw, {width : 50, depth : 50})
+const table = fw.addSimpleSceneWithTable();
 
 const fixCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Create a camera
 fixCamera.position.set(0, 50,0); //Set the position of the camera
@@ -27,6 +24,7 @@ const raycaster = new THREE.Raycaster(); //Create a new raycaster object
 const pointer = new THREE.Vector2(); //Create a new vector2 object
 
 var activeCamera = fixCamera;
+fw.onResize({camera: activeCamera});
 
 var listObstacle = [];
 
@@ -44,17 +42,17 @@ window.addEventListener("keydown" , function(event){
 
 /* -------------- Navigation Bar --------------- */
 
-fw.addButtonToNavbar("Restart", () => location.reload());
-fw.addButtonToNavbar("Pause", () => {
+fw.addButtonToNavbar({textButton : "Restart" , onclickFunction : () => location.reload()});
+fw.addButtonToNavbar({textButton :"Pause", onclickFunction : () => {
     if(loop != undefined){
     loop.stop = !loop.stop;
-    document.getElementById('navbar0').children[2].textContent = loop.stop ? "Play" : "Pause";
+    document.getElementById('navbar0').children[2].textContent = loop.stop ? "Play" : "Pause";}
 }});
-fw.addButtonToNavbar("Draw", changeToDraw);
-fw.addButtonToNavbar("Wander", changeMethode);
+fw.addButtonToNavbar({textButton : "Draw",onclickFunction : changeToDraw});
+fw.addButtonToNavbar({textButton : "Wander",onclickFunction : changeMethode});
 var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
-fw.addDropdownToNavbar("Speed", dropdownList);
-fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
+fw.addDropdownToNavbar({textButton : "Speed",dropdownList : dropdownList});
+fw.addDropdownToNavbar({textButton : "Distance",dropdownList : [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]});
 
 export function changeSpeedPlus(){ antSettings.speed += 0.2;}
 
@@ -81,31 +79,18 @@ const manager = new THREE.LoadingManager();
 
 
 async function loadAllModel(){
-    const loadingScreen = document.createElement('div');
-    loadingScreen.id = 'loading-screen';
-    loadingScreen.style.position = 'fixed';
-    loadingScreen.style.top = '0';
-    loadingScreen.style.left = '0';
-    loadingScreen.style.width = '100%';
-    loadingScreen.style.height = '100%';
-    loadingScreen.style.backgroundColor = '#000';
-    loadingScreen.style.color = '#fff';
-    loadingScreen.style.display = 'flex';
-    loadingScreen.style.justifyContent = 'center';
-    loadingScreen.style.alignItems = 'center';
-    loadingScreen.style.zIndex = '1000';
-    loadingScreen.innerHTML = '<h1>Loading...</h1>';
-    document.body.appendChild(loadingScreen);
+    fw.startLoadingScreen();
     
-    await fw.loadModel("/src/models/ant/scene.gltf", "ant");
-    await fw.loadModel("/src/models/nest/raptor_nest/scene.gltf", "nest");
-    await fw.loadModel("/src/models/enamel_cup/scene.gltf", "cup1");
-    await fw.loadModel("/src/models/coffeeMug/scene.gltf", "cup2");
-    await fw.loadModel("/src/models/tasse_cafe/scene.gltf", "cup3");
-    await fw.loadModel("/src/models/handpainted_watercolor_cake/scene.gltf", "cake");
-    await fw.loadModel("/src/models/bread/scene.gltf", "bread");
+    await fw.loadModel("/src/models/ant/scene.gltf", "ant", {size : 0.015});
+    await fw.loadModel("/src/models/nest/raptor_nest/scene.gltf", "nest", {size : 3});
+    await fw.loadModel("/src/models/enamel_cup/scene.gltf", "cup1", {size : 1});
+    await fw.loadModel("/src/models/coffeeMug/scene.gltf", "cup2", {size : 0.03});
+    await fw.loadModel("/src/models/tasse_cafe/scene.gltf", "cup3", {size : 20});
+    await fw.loadModel("/src/models/handpainted_watercolor_cake/scene.gltf", "cake", {size : 1});
+    await fw.loadModel("/src/models/bread/scene.gltf", "bread", {size : 0.5});
 
-    document.body.removeChild(loadingScreen);
+    fw.removeLoadingScreen();
+
 }
 
 await loadAllModel();
@@ -151,7 +136,7 @@ async function placeObstacle(event){
                 break;
             }
 
-            var mug = await fw.create_copy(typeOfMug, scale);
+            var mug = await fw.create_copy(typeOfMug,{size : scale} );
             mug.position.set(position.x, position.y, position.z);
 
             listObstacle.push(new Obstacle(position, typeOfMug));
@@ -172,16 +157,16 @@ async function placeFood(event){
         var randomFood = Math.floor(Math.random() * 2);
         switch(randomFood){
             case 0:
-                var food = await fw.create_copy("cake", 1);
+                var food = await fw.create_copy("cake", {size : 1});
                 food.position.set(position.x, position.y, position.z);
                 break;
             case 1:
-                var food = await fw.create_copy("bread", 0.5);
+                var food = await fw.create_copy("bread", {size : 0.5});
                 var posY = 1.5;
                 food.position.set(position.x, position.y+posY, position.z);
                 break;
             default:
-                var food = await fw.create_copy("cake", 1);
+                var food = await fw.create_copy("cake", {size :1});
                 food.position.set(position.x, position.y, position.z);
                 break;
         }
@@ -218,7 +203,6 @@ var drawing = new Drawing();
 var loop;
 
 function onTouch(event){
-    //console.log("Screnn touched");
     if(drawing.canDraw){
         pointer.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
@@ -246,7 +230,6 @@ function onSwipe(event){
 }
 
 async function onRelease(event){
-    //console.log("Screen released");
     if(drawing.listPoints.length < 30){
         //alert("Path too short, please draw a longer path");
         for(drawing.listLine.length; drawing.listLine.length > 0;){
@@ -271,7 +254,7 @@ async function onRelease(event){
 
     loop.typeOfLoop = "normal";
 
-    await fw.create_copy("nest", 3)
+    await fw.create_copy("nest", {size : 3});
     scene.getObjectByName("nest_copy0").position.set(drawing.listPoints[0].x, drawing.listPoints[0].y, drawing.listPoints[0].z);
 
     window.removeEventListener('touchstart',onTouch);
@@ -288,7 +271,6 @@ async function onRelease(event){
 
 function initWander(){
     window.addEventListener('touchstart',onTouchWander);
-    
 }
 
 export function changeMethode(){
@@ -312,7 +294,7 @@ async function onTouchWander(event){
     const intersects = raycaster.intersectObject(scene.getObjectByName("table"));
     if(intersects.length > 0){
         drawing.addPoint(intersects[0].point);
-        var modelNest = await fw.create_copy("nest", 3);
+        var modelNest = await fw.create_copy("nest", {size : 3});
         modelNest.position.set(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
         scene.add(modelNest);
         var FirstAnt = new Ant(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z, scene.getObjectByName("ant"), fw);

@@ -1,6 +1,3 @@
-import * as THREE from 'three';
-import Framework from '../framework/framework';
-
 export default class Food {
     constructor(name, position){
         this.name = name;
@@ -17,6 +14,5 @@ export default class Food {
 
     decreaseQuantity(){
         this.quantity -= 1;
-        //console.log(this.quantity);
     }
 }

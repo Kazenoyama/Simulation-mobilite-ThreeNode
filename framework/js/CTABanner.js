@@ -111,30 +111,27 @@ class CTABanner{
       console.error(`Parent element with id ${parentId} not found.`);
       return;
     }
-
+  
+    // Create the dropdown menu container
     const dropdownMenu = document.createElement("div");
     dropdownMenu.className = "menu_deroulant";
     parent.appendChild(dropdownMenu);
-
+  
+    // Create the dropdown button
     const dropdownButton = document.createElement("button");
-    dropdownButton.className = "dropbtn"; 
+    dropdownButton.className = "dropbtn child"; // Adding "child" class to inherit styles
     dropdownButton.textContent = buttonText;
     dropdownButton.id = `dropbtn-${menuId}`; 
     dropdownButton.onclick = () => this.toggleDropdown(menuId); 
     dropdownMenu.appendChild(dropdownButton);
-
+  
+    // Create the dropdown content container
     const dropdownContent = document.createElement("div");
     dropdownContent.className = "dropdown-content";
     dropdownContent.id = menuId;
     dropdownMenu.appendChild(dropdownContent);
-
-    this.style_dropdown(dropdownMenu);
-    this.style_dropbtn(dropdownButton); 
-    this.style_dropdown_content();
-    this.style_dropdown_content_a();
-    this.style_dropdown_content_parameters();
-    this.style_hover();
-  }
+  }  
+  
   // Ajoute des éléments dans le menu déroulant de manière générique
   create_dropdown_list(menuId, items) {
     const dropdownContent = document.getElementById(menuId);
@@ -191,11 +188,15 @@ class CTABanner{
   create_button(container, { text = "Click me!", onClick = () => alert("Button clicked!"), position = "before", referenceElement = null, classes = [] }) {
     const button = document.createElement("button");
     button.textContent = text;
-    button.style.border = "none";
+  
+    // Add custom classes for styling, including 'child' and any passed classes
     button.classList.add("child", ...classes);
+    
+    // Event listener for the button click
     button.onclick = onClick;
     button.position = position;
-
+  
+    // Positioning the button based on reference element and position
     if (referenceElement && container.contains(referenceElement)) {
       if (position === "before") {
         container.insertBefore(button, referenceElement);
@@ -205,7 +206,9 @@ class CTABanner{
     } else {
       container.appendChild(button);
     }
+    this.style_navbar_children(container);
   }
+  
 
   // Crée la structure HTML de base
   createHTMLStructure() {
@@ -247,12 +250,12 @@ class CTABanner{
       const element = children[i];
       
       element.style.float = "left";
-      element.style.fontSize = "16px";
-      element.style.color = "white";
+      // element.style.fontSize = "16px";
+      // element.style.color = "white";
       element.style.textAlign = "center";
       element.style.padding = "14px 16px";
-      element.style.textDecoration = "none";
-      element.style.backgroundColor = "transparent";
+      // element.style.textDecoration = "none";
+      // element.style.backgroundColor = "transparent";
       
     }
   }
