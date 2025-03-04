@@ -10,7 +10,8 @@
     "addStyle": " (echo body { & type tab.txt & echo background-color: white; & type tab.txt & echo margin : 0; & echo })> src\\css\\style.css",
     "move": "move framework.js src\\framework\\framework.js && move CTABanner.js src\\framework\\CTABanner.js && move createScene.js src\\framework\\createScene.js && move table.js src\\framework\\table.js && move roof.jpg src\\textures\\roof.jpg && move wall.jpg src\\textures\\wall.jpg && move wood_floor.jpg src\\textures\\wood_floor.jpg && move main.js src\\js\\main.js",
     "initialState": "move src\\framework\\framework.js framework.js && move src\\framework\\CTABanner.js CTABanner.js && move src\\framework\\createScene.js createScene.js && move src\\framework\\table.js table.js && move src\\textures\\roof.jpg roof.jpg && move src\\textures\\wall.jpg wall.jpg && move src\\textures\\wood_floor.jpg wood_floor.jpg && move src\\js\\main.js main.js && npm run delete",
-    "delete": "rmdir /s /q src && rmdir /s /q node_modules && del package-lock.json"
+    "delete": "rmdir /s /q src && rmdir /s /q node_modules && del package-lock.json",
+    "start": "vite --port $PORT --host"
   },
   "keywords": [
     "three.js",
