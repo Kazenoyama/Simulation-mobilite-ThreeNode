@@ -343,7 +343,54 @@ function animate() {
     renderer.render(scene, activeCamera);
 }
 
-animate();
+// Après la déclaration des caméras et avant les event listeners
+export function toggleCameraMode() {
+    if (activeCamera === fixCamera) {
+        activeCamera = camera;
+        camera.position.set(0, 60, 50);
+        camera.lookAt(0, 0, 0);
+    } else {
+        activeCamera = fixCamera;
+        fixCamera.position.set(0, 50, 0);
+        fixCamera.lookAt(0, 0, 0);
+    }
+}
 
+export function zoomIn() {
+    if (activeCamera === camera) {
+        if (camera.position.y > 20) {
+            camera.position.y -= 5;
+            camera.position.z -= 4;
+            camera.lookAt(0, 0, 0);
+        }
+    } else if (activeCamera === fixCamera) {
+        if (fixCamera.position.y > 20) {
+            fixCamera.position.y -= 5;
+            fixCamera.lookAt(0, 0, 0);
+        }
+    }
+}
+
+export function zoomOut() {
+    if (activeCamera === camera) {
+        if (camera.position.y < 100) {
+            camera.position.y += 5;
+            camera.position.z += 4;
+            camera.lookAt(0, 0, 0);
+        }
+    } else if (activeCamera === fixCamera) {
+        if (fixCamera.position.y < 100) {
+            fixCamera.position.y += 5;
+            fixCamera.lookAt(0, 0, 0);
+        }
+    }
+}
+
+// Dans la section Navigation Bar, ajoutez ces lignes après les autres boutons
+fw.addButtonToNavbar("➕", zoomIn);
+fw.addButtonToNavbar("➖", zoomOut);
+fw.addButtonToNavbar("👁️", toggleCameraMode);
+
+animate();
 
 
