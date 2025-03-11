@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "vite preview --host --port $PORT",
+    "start": "vite preview --host --port 3000",
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm run install_three && npm run setupDirectory && npm run addStyle && npm run move",
     "install_three": "npm install three",
