@@ -58,10 +58,15 @@ export default class Loop {
             }
             await this.actionForAnt(scene);
             
+            // Mise à jour des phéromones pour toutes les fourmis
+            this.listA.forEach(ant => ant.updatePheromones(scene));
         }
         //Follow the previous ant created
         else{
             await this.actionForAnt(scene);
+            
+            // Mise à jour des phéromones pour toutes les fourmis
+            this.listA.forEach(ant => ant.updatePheromones(scene));
         }
     };
 
@@ -98,14 +103,13 @@ export default class Loop {
                 else if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) < this.listF[f].radius && this.listA[i].retracePath == false){
                     this.listA[i].targetDirection = {x: this.listF[f].position.x, y: 0, z: this.listF[f].position.z};
                 }
-                // else{
-                //     //this.listF[f].growingRadius();
-                // }
             }
             if(this.listA[i].loopLaunched == false){
                 this.listA[i].wander(scene);
             }
             
+            // Mise à jour des phéromones pour chaque fourmi
+            this.listA[i].updatePheromones(scene);
 
             if(this.listA[i].eat && this.listA[i].pathTaken.length <= 1 && this.listA[i].loopLaunched == false){
                 var finish = {x: this.listA[i].goodPath[this.listA[i].goodPath.length-1].x, y: this.listA[i].goodPath[this.listA[i].goodPath.length-1].y, z: this.listA[i].goodPath[this.listA[i].goodPath.length-1].z};

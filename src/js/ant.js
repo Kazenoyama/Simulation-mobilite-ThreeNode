@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import Framework from '../framework/framework';
+import Pheromone from './Pheromone';
 
 export let antSettings = {
     speed: 0.2,
-    minDistance: 4
+    minDistance: 4,
+    pheromoneInterval: 500, // Intervalle entre chaque dépôt de phéromone
+    animationSpeed: 0.1 // Vitesse de l'animation
 };
 
 export default class Ant{
@@ -22,6 +25,11 @@ export default class Ant{
     foodEaten = null;
     type = "";
     fw = null;
+    lastPheromoneTime = 0;
+    pheromones = [];
+    currentRotation = 0;
+    targetRotation = 0;
+    animationPhase = 0;
 
     constructor(x,y,z, model, fw){
         console.log('Ant constructor');
@@ -113,7 +121,29 @@ export default class Ant{
     }
 
     rotateModel(ant3D, direction){
-        //TODO: Rotate the model to face the direction
+        // Calcul de la rotation cible
+        const targetAngle = Math.atan2(direction.x, direction.z);
+        this.targetRotation = targetAngle;
+        
+        // Animation fluide de la rotation
+        const rotationDiff = this.targetRotation - this.currentRotation;
+        this.currentRotation += rotationDiff * antSettings.animationSpeed;
+        
+        // Application de la rotation
+        ant3D.rotation.y = this.currentRotation;
+
+        // Animation de marche
+        this.animationPhase += antSettings.animationSpeed;
+        const legRotation = Math.sin(this.animationPhase) * 0.3;
+        
+        // Rotation des pattes (si le modèle a des pattes)
+        if (ant3D.children) {
+            ant3D.children.forEach(child => {
+                if (child.name.includes('leg')) {
+                    child.rotation.x = legRotation;
+                }
+            });
+        }
     }
 
     wander(scene){
@@ -188,6 +218,27 @@ export default class Ant{
     updateParameter(){
         this.speed = antSettings.speed;
         this.minDistance = antSettings.minDistance;
+    }
+
+    updatePheromones(scene) {
+        const currentTime = Date.now();
+        
+        // Dépôt de phéromones périodique
+        if (currentTime - this.lastPheromoneTime > antSettings.pheromoneInterval) {
+            const pheromone = new Pheromone(this.position);
+            pheromone.createParticleSystem(scene);
+            this.pheromones.push(pheromone);
+            this.lastPheromoneTime = currentTime;
+        }
+
+        // Mise à jour et nettoyage des phéromones
+        this.pheromones = this.pheromones.filter(pheromone => {
+            const isAlive = pheromone.update();
+            if (!isAlive) {
+                pheromone.remove(scene);
+            }
+            return isAlive;
+        });
     }
 
 }
