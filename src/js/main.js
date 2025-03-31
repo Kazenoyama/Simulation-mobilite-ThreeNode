@@ -52,6 +52,78 @@ fw.addButtonToNavbar("Pause", () => {
 }});
 fw.addButtonToNavbar("Draw", changeToDraw);
 fw.addButtonToNavbar("Wander", changeMethode);
+fw.addButtonToNavbar("❓", () => {
+    const modal = document.createElement("div");
+    modal.id = "helpModal";
+    modal.className = "modal";
+    modal.style.display = "block";
+    modal.style.position = "fixed";
+    modal.style.zIndex = "1000";
+    modal.style.left = "0";
+    modal.style.top = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.backgroundColor = "rgba(0,0,0,0.4)";
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+
+    const modalContent = document.createElement("div");
+    modalContent.className = "modal-content";
+    modalContent.style.backgroundColor = "#fefefe";
+    modalContent.style.margin = "15% auto";
+    modalContent.style.padding = "20px";
+    modalContent.style.border = "1px solid #888";
+    modalContent.style.width = "80%";
+    modalContent.style.maxWidth = "500px";
+    modalContent.style.borderRadius = "10px";
+    modalContent.style.position = "relative";
+
+    const closeBtn = document.createElement("span");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.right = "10px";
+    closeBtn.style.top = "5px";
+    closeBtn.style.fontSize = "28px";
+    closeBtn.style.fontWeight = "bold";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.onclick = () => modal.remove();
+
+    const title = document.createElement("h2");
+    title.textContent = "Les Phéromones, c'est quoi ?";
+    title.style.color = "#333";
+    title.style.marginBottom = "20px";
+
+    const content = document.createElement("div");
+    content.innerHTML = `
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">
+            Les phéromones sont comme des messages secrets que les fourmis laissent derrière elles ! 🐜
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">
+            C'est comme si elles dessinaient un chemin invisible avec une odeur spéciale. Quand une fourmi trouve de la nourriture, elle laisse des phéromones sur son chemin pour que les autres fourmis puissent la suivre !
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">
+            Plus il y a de fourmis qui passent par le même chemin, plus les phéromones deviennent fortes. C'est comme si elles disaient : "Hey, par ici, j'ai trouvé de la nourriture !" 🍰
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">
+            Dans notre simulation, les phéromones sont représentées par des points verts. Plus il y a de points verts, plus le chemin est populaire ! 🌟
+        </p>
+    `;
+
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(title);
+    modalContent.appendChild(content);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Fermer la fenêtre si on clique en dehors
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.remove();
+        }
+    };
+});
+
 var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
 fw.addDropdownToNavbar("Speed", dropdownList);
 fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
