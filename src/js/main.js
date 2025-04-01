@@ -53,7 +53,16 @@ fw.addButtonToNavbar("Pause", () => {
 });
 fw.addButtonToNavbar("Draw", changeToDraw);
 fw.addButtonToNavbar("Wander", changeMethode);
-fw.addButtonToNavbar("❓", () => {
+
+var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
+fw.addDropdownToNavbar("Speed", dropdownList);
+fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
+
+// Créer le bouton d'aide séparé
+const helpButton = document.createElement('button');
+helpButton.textContent = "❓";
+helpButton.className = 'help-button';
+helpButton.onclick = () => {
     const modal = document.createElement("div");
     modal.id = "helpModal";
     modal.className = "modal";
@@ -123,11 +132,8 @@ fw.addButtonToNavbar("❓", () => {
             modal.remove();
         }
     };
-});
-
-var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
-fw.addDropdownToNavbar("Speed", dropdownList);
-fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
+};
+document.body.appendChild(helpButton);
 
 // Ajouter les boutons de zoom et de caméra
 fw.addButtonToNavbar("➕", zoomIn);
