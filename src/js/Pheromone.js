@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 
 export default class Pheromone {
-    constructor(position) {
+    constructor(position, type = 'food') {
         this.position = position;
+        this.type = type; // 'food' ou 'return'
         this.intensity = 1.0;
-        this.lifetime = 1000; // durée de vie en millisecondes
+        this.evaporationRate = 0.01;
+        this.diffusionRate = 0.1;
         this.createdAt = Date.now();
         this.particles = null;
     }
@@ -15,8 +17,8 @@ export default class Pheromone {
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         
-        // Couleur verte pour les phéromones
-        const color = new THREE.Color(0, 1, 0);
+        // Couleur différente selon le type de phéromone
+        const color = this.type === 'food' ? new THREE.Color(0, 1, 0) : new THREE.Color(1, 0, 0);
         
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3] = this.position.x + (Math.random() - 0.5) * 2;
@@ -44,13 +46,31 @@ export default class Pheromone {
 
     update() {
         const age = Date.now() - this.createdAt;
-        this.intensity = Math.max(0, 1 - (age / this.lifetime));
+        
+        // Évaporation
+        this.intensity -= this.evaporationRate;
+        
+        // Diffusion
+        this.diffuse();
         
         if (this.particles) {
             this.particles.material.opacity = 0.6 * this.intensity;
         }
 
         return this.intensity > 0;
+    }
+
+    diffuse() {
+        // Simulation simple de diffusion
+        if (this.particles) {
+            const positions = this.particles.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i] += (Math.random() - 0.5) * this.diffusionRate;
+                positions[i + 1] += (Math.random() - 0.5) * this.diffusionRate;
+                positions[i + 2] += (Math.random() - 0.5) * this.diffusionRate;
+            }
+            this.particles.geometry.attributes.position.needsUpdate = true;
+        }
     }
 
     remove(scene) {

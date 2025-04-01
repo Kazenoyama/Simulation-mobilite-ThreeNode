@@ -47,9 +47,10 @@ window.addEventListener("keydown" , function(event){
 fw.addButtonToNavbar("Restart", () => location.reload());
 fw.addButtonToNavbar("Pause", () => {
     if(loop != undefined){
-    loop.stop = !loop.stop;
-    document.getElementById('navbar0').children[2].textContent = loop.stop ? "Play" : "Pause";
-}});
+        loop.stop = !loop.stop;
+        document.getElementById('navbar0').children[2].textContent = loop.stop ? "Play" : "Pause";
+    }
+});
 fw.addButtonToNavbar("Draw", changeToDraw);
 fw.addButtonToNavbar("Wander", changeMethode);
 fw.addButtonToNavbar("❓", () => {
@@ -128,22 +129,10 @@ var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { 
 fw.addDropdownToNavbar("Speed", dropdownList);
 fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
 
-export function changeSpeedPlus(){ antSettings.speed += 0.2;}
-
-export function changeSpeedMinus(){antSettings.speed -= 0.2;
-    if(antSettings.speed < 0){
-        antSettings.speed = 0.2;
-    }
-
-}
-
-export function changeDistancePlus(){antSettings.minDistance += 1;}
-
-export function changeDistanceMinus(){
-    antSettings.minDistance -= 1;
-    if(antSettings.minDistance <= 0) antSettings.minDistance = 1;
-}
-
+// Ajouter les boutons de zoom et de caméra
+fw.addButtonToNavbar("➕", zoomIn);
+fw.addButtonToNavbar("➖", zoomOut);
+fw.addButtonToNavbar("👁️", toggleCameraMode);
 
 /* --------------------------------------------- */
 
@@ -457,11 +446,6 @@ export function zoomOut() {
         }
     }
 }
-
-// Dans la section Navigation Bar, ajoutez ces lignes après les autres boutons
-fw.addButtonToNavbar("➕", zoomIn);
-fw.addButtonToNavbar("➖", zoomOut);
-fw.addButtonToNavbar("👁️", toggleCameraMode);
 
 animate();
 

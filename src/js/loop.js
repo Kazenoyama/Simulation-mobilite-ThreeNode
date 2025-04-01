@@ -16,14 +16,14 @@ export default class Loop {
         this.listA = [];
         this.listA.push(FirstAnt);
         this.MaxAnt = 50;
-        this.MaxWanderingAnt = 4;
+        this.MaxWanderingAnt = 20;
         this.listO = listObstacle;
         this.counter = 1 + FirstAnt.number * 1000;
         console.log(this.listO.length);
         
         this.typeOfLoop;
         this.intervallLaunched = false;
-        this.maxPath = 100;
+        this.maxPath = 200;
         this.listF = [];
 
         this.listLoop = [];
@@ -81,76 +81,102 @@ export default class Loop {
     }
 
     async wanderLoop(scene){
-        this.addAnt(scene);
-        this.updateAnt();
+        try {
+            this.addAnt(scene);
+            this.updateAnt();
 
-        this.deleteFood(scene);
+            this.deleteFood(scene);
 
-        if(!this.intervallLaunched){
-            this.launchIntervall(); 
-        }
-        for(var i =0 ; i < this.listA.length; i++){
-            if(this.listA[i].pathTaken.length >= this.maxPath){
-                this.listA[i].retracePath = true;
+            if(!this.intervallLaunched){
+                this.launchIntervall(); 
             }
 
-            for(var f = 0; f < this.listF.length; f++){
-                if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) <= 1 && this.listA[i].eat == false){
-                    this.listA[i].foodEaten = this.listF[f];
-                    this.listA[i].retracePath = true;
-                    this.listA[i].eat = true;
+            for(let i = 0; i < this.listA.length; i++){
+                const ant = this.listA[i];
+                
+                if(!ant) continue;
+                
+                if(ant.pathTaken.length >= this.maxPath){
+                    ant.retracePath = true;
                 }
-                else if(this.listA[i].distance(this.listF[f].position.x, this.listF[f].position.y, this.listF[f].position.z) < this.listF[f].radius && this.listA[i].retracePath == false){
-                    this.listA[i].targetDirection = {x: this.listF[f].position.x, y: 0, z: this.listF[f].position.z};
+
+                // Communication entre les fourmis
+                ant.communicateWithOtherAnts(this.listA);
+
+                // Détection améliorée de la nourriture
+                const nearestFood = this.findNearestFood(ant);
+                if (nearestFood && !nearestFood.isBeingCarried) {
+                    const distance = ant.distance(nearestFood.position.x, nearestFood.position.y, nearestFood.position.z);
+                    const pheromoneStrength = this.getPheromoneStrength(ant.position, 'food');
+                    
+                    if (distance <= 1 && !ant.eat) {
+                        ant.foodEaten = nearestFood;
+                        ant.retracePath = true;
+                        ant.eat = true;
+                        nearestFood.isBeingCarried = true;
+                        nearestFood.carrierAnt = ant;
+                        ant.updatePheromones(scene);
+                    } else if (distance < nearestFood.radius && !ant.retracePath) {
+                        const direction = this.calculateDirection(ant, nearestFood, pheromoneStrength);
+                        ant.targetDirection = direction;
+                    }
                 }
-            }
-            if(this.listA[i].loopLaunched == false){
-                this.listA[i].wander(scene);
-            }
-            
-            // Mise à jour des phéromones pour chaque fourmi
-            this.listA[i].updatePheromones(scene);
 
-            if(this.listA[i].eat && this.listA[i].pathTaken.length <= 1 && this.listA[i].loopLaunched == false){
-                var finish = {x: this.listA[i].goodPath[this.listA[i].goodPath.length-1].x, y: this.listA[i].goodPath[this.listA[i].goodPath.length-1].y, z: this.listA[i].goodPath[this.listA[i].goodPath.length-1].z};
-                var start = {x: this.listA[i].goodPath[0].x, y: this.listA[i].goodPath[0].y, z: this.listA[i].goodPath[0].z};
-                this.listLoop.push(new Loop(this.listA[i], start, finish, this.listA[i].goodPath, this.listO, this.modelAnt, this.fw));
-                this.listLoop[this.listLoop.length -1].typeOfLoop = 'normal';
-                this.listLoop[this.listLoop.length -1].name = "loop"+this.listA[i].number;
-                this.listLoop[this.listLoop.length -1].foodToEat = this.listA[i].foodEaten;
-                this.listA[i].loopLaunched = true;
-            }
+                if(!ant.loopLaunched){
+                    ant.wander(scene);
+                }
+                
+                ant.updatePheromones(scene);
 
-            if(this.listLoop.length > 0){
-                for(var l = 0; l < this.listLoop.length; l++){
-                    this.listLoop[l].launchLoop(scene);
-                    if(this.listLoop[l].deleteLoop){
-                        console.log("Loop deleted");
-                        for(var a = 0; a < this.MaxWanderingAnt; a++){
-                            if(this.listLoop[l].antStart.number == this.listA[a].number){
-                                var ant = this.listA[a];
-                                console.log("Ant found")
-                                ant.position = {x: this.start.x, y: this.start.y+0.5, z: this.start.z};
-                                ant.pathTaken = [];
-                                ant.goodPath = [];
-                                ant.pathTaken.push({x: this.start.x, y: this.start.y, z: this.start.z});
-                                
-                                ant.arrived = false;
-                                ant.eat = false;
-                                ant.foodEaten = null;
-                                
-                                ant.retracePath = false;
-                                ant.retracePath = false;
-                                ant.loopLaunched = false;
-                                
-                            }
+                if(ant.eat && ant.pathTaken.length <= 1 && !ant.loopLaunched){
+                    const finish = {x: ant.goodPath[ant.goodPath.length-1].x, y: ant.goodPath[ant.goodPath.length-1].y, z: ant.goodPath[ant.goodPath.length-1].z};
+                    const start = {x: ant.goodPath[0].x, y: ant.goodPath[0].y, z: ant.goodPath[0].z};
+                    
+                    const newLoop = new Loop(ant, start, finish, ant.goodPath, this.listO, this.modelAnt, this.fw);
+                    newLoop.typeOfLoop = 'normal';
+                    newLoop.name = "loop"+ant.number;
+                    newLoop.foodToEat = ant.foodEaten;
+                    
+                    this.listLoop.push(newLoop);
+                    ant.loopLaunched = true;
+                }
+
+                // Gestion des sous-boucles
+                if(this.listLoop.length > 0){
+                    for(let l = 0; l < this.listLoop.length; l++){
+                        const subLoop = this.listLoop[l];
+                        if(!subLoop) continue;
+                        
+                        subLoop.launchLoop(scene);
+                        if(subLoop.deleteLoop){
+                            this.handleLoopDeletion(subLoop, l);
                         }
-                       this.listLoop.splice(l,1);
                     }
                 }
             }
-            
-        };   
+        } catch (error) {
+            console.error("Error in wanderLoop:", error);
+        }
+    }
+
+    handleLoopDeletion(loop, index) {
+        console.log("Loop deleted");
+        for(let a = 0; a < this.MaxWanderingAnt; a++){
+            if(loop.antStart.number === this.listA[a]?.number){
+                const ant = this.listA[a];
+                ant.position = {x: this.start.x, y: this.start.y+0.5, z: this.start.z};
+                ant.pathTaken = [];
+                ant.goodPath = [];
+                ant.pathTaken.push({x: this.start.x, y: this.start.y, z: this.start.z});
+                
+                ant.arrived = false;
+                ant.eat = false;
+                ant.foodEaten = null;
+                ant.retracePath = false;
+                ant.loopLaunched = false;
+            }
+        }
+        this.listLoop.splice(index, 1);
     }
 
     deleteFood(scene){
@@ -175,29 +201,23 @@ export default class Loop {
     launchIntervall(){
         setInterval(() => {
             for(var i = 0; i < this.listA.length; i++){
+                const ant = this.listA[i];
                 
-                if(this.listA[i].pathTaken.length < this.maxPath){
-                    const angle = Math.random() * Math.PI; // Random angle within 180 degrees
-                    const distance = Math.random() * 50  ; // Random distance within 10 units
-                    var offsetX = Math.sin(angle) * distance; // X offset based on angle and distance
-                    var offsetZ = Math.cos(angle) * distance; // Z offset based on angle and distance
-                    const goBehind = Math.random() * 2;
-                    if(goBehind < 1){
-                        offsetX = -offsetX;
-                        offsetZ = -offsetZ;
-                    }
-                    const negativeOffsetX = -offsetX; // Negative X offset
-                    const negativeOffsetZ = -offsetZ; // Negative Z offset
-                    this.listA[i].targetDirection = {x: offsetX, y: 0, z: offsetZ};
-
-                    if(this.listF.length > 0){
-                        for(var f= 0; f < this.listF.length; f++){
-                            this.listF[f].growingRadius();
-                        }
-                    }
+                if(ant.pathTaken.length < this.maxPath && !ant.eat){
+                    // Génération d'une direction aléatoire plus naturelle
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 20 + 10;
+                    const offsetX = Math.cos(angle) * distance;
+                    const offsetZ = Math.sin(angle) * distance;
+                    
+                    // Limites de la scène
+                    const boundedX = Math.max(-24, Math.min(24, offsetX));
+                    const boundedZ = Math.max(-24, Math.min(24, offsetZ));
+                    
+                    ant.targetDirection = {x: boundedX, y: 0, z: boundedZ};
                 }
             }
-        },500);
+        }, 500);
     }
 
     follow(scene){
@@ -255,11 +275,56 @@ export default class Loop {
         }
     }
 
+    findNearestFood(ant) {
+        let nearest = null;
+        let minDistance = Infinity;
+        
+        for (const food of this.listF) {
+            const distance = ant.distance(food.position.x, food.position.y, food.position.z);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = food;
+            }
+        }
+        
+        return nearest;
+    }
 
+    getPheromoneStrength(position, type) {
+        let strength = 0;
+        let count = 0;
+        
+        for (const ant of this.listA) {
+            for (const pheromone of ant.pheromones) {
+                if (pheromone.type === type) {
+                    const distance = Math.sqrt(
+                        Math.pow(position.x - pheromone.position.x, 2) +
+                        Math.pow(position.y - pheromone.position.y, 2) +
+                        Math.pow(position.z - pheromone.position.z, 2)
+                    );
+                    if (distance < 5) {
+                        strength += pheromone.intensity;
+                        count++;
+                    }
+                }
+            }
+        }
+        
+        return count > 0 ? strength / count : 0;
+    }
 
-
-
-
-
-
+    calculateDirection(ant, food, pheromoneStrength) {
+        const dx = food.position.x - ant.position.x;
+        const dz = food.position.z - ant.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        // Influence des phéromones sur la direction
+        const pheromoneInfluence = pheromoneStrength * 0.5;
+        
+        return {
+            x: ant.position.x + (dx / distance) * (1 + pheromoneInfluence),
+            y: 0,
+            z: ant.position.z + (dz / distance) * (1 + pheromoneInfluence)
+        };
+    }
 }

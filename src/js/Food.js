@@ -9,6 +9,9 @@ export default class Food {
         this.position = position;
         this.radius = 3;
         this.quantity = 40;
+        this.isBeingCarried = false;
+        this.carrierAnt = null;
+        this.visual = null;
     }
 
     growingRadius(){
@@ -18,5 +21,18 @@ export default class Food {
     decreaseQuantity(){
         this.quantity -= 1;
         //console.log(this.quantity);
+    }
+
+    updatePosition(antPosition) {
+        if (this.isBeingCarried) {
+            this.position = {
+                x: antPosition.x,
+                y: antPosition.y + 0.5, // Légèrement au-dessus de la fourmi
+                z: antPosition.z
+            };
+            if (this.visual) {
+                this.visual.position.set(this.position.x, this.position.y, this.position.z);
+            }
+        }
     }
 }

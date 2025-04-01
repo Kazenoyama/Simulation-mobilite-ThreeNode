@@ -6,7 +6,10 @@ export let antSettings = {
     speed: 0.2,
     minDistance: 4,
     pheromoneInterval: 500, // Intervalle entre chaque dépôt de phéromone
-    animationSpeed: 0.1 // Vitesse de l'animation
+    animationSpeed: 0.1, // Vitesse de l'animation
+    explorationRadius: 30,
+    foodDetectionRadius: 5,
+    communicationRadius: 10
 };
 
 export default class Ant{
@@ -30,12 +33,13 @@ export default class Ant{
     currentRotation = 0;
     targetRotation = 0;
     animationPhase = 0;
+    explorationPhase = 0;
 
     constructor(x,y,z, model, fw){
         console.log('Ant constructor');
         this.position = {x:x, y:y, z:z};
         this.fw = fw;
-
+        this.explorationPhase = Math.random() * Math.PI * 2;
     }
 
     async createAnt(counter){
@@ -146,7 +150,24 @@ export default class Ant{
         }
     }
 
-    wander(scene){
+    wander(scene) {
+        if (this.foodEaten) {
+            // Si la fourmi transporte de la nourriture, la mettre à jour avec sa position
+            this.foodEaten.updatePosition(this.position);
+            
+            // Si la fourmi est proche du nid, déposer la nourriture
+            const distanceToNest = this.distance(0, 0, 0);
+            if (distanceToNest < 2) {
+                this.foodEaten.isBeingCarried = false;
+                this.foodEaten.carrierAnt = null;
+                this.foodEaten = null;
+                this.eat = false;
+                this.retracePath = false;
+                this.loopLaunched = false;
+                return;
+            }
+        }
+
         if(this.retracePath){
             this.followN(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z, scene);
             if(this.distance(this.pathTaken[this.pathTaken.length-1].x, this.pathTaken[this.pathTaken.length-1].y, this.pathTaken[this.pathTaken.length-1].z) < 0.1 && this.pathTaken.length > 1){
@@ -157,30 +178,30 @@ export default class Ant{
             }
         }
         else{
-            var targetX = this.targetDirection.x; // Calculate target X position
-            var targetZ = this.targetDirection.z; // Calculate target Z positichaon
-
-            if(targetX > 24 ){
-                targetX = targetX - (targetX - 24);
-                targetZ = targetZ;
-            }
-            if(targetX < -24){
-                targetX = targetX - (targetX + 24);
-                targetZ = targetZ;
-            }
-            if(targetZ > 24){
-                targetZ = targetZ - (targetZ - 24);
-                targetX = targetX;
-            }
-            if(targetZ < -24){
-                targetZ = targetZ - (targetZ + 24);
-                targetX = targetX;
-            }
-
-            this.followN(targetX, this.position.y, targetZ, scene); // Call followN with the modified target position
-            this.addToPathTaken(this.position.x, this.position.y, this.position.z); // Add the current position to the path taken
+            // Utiliser la direction cible définie par launchIntervall
+            const targetX = this.targetDirection.x;
+            const targetZ = this.targetDirection.z;
+            
+            // Ajouter un peu de bruit pour un mouvement plus naturel
+            const noise = this.generatePerlinNoise(this.position.x, this.position.z);
+            const noisyX = targetX + noise.x * 2;
+            const noisyZ = targetZ + noise.z * 2;
+            
+            // Limites de la scène
+            const boundedX = Math.max(-24, Math.min(24, noisyX));
+            const boundedZ = Math.max(-24, Math.min(24, noisyZ));
+            
+            this.followN(boundedX, this.position.y, boundedZ, scene);
+            this.addToPathTaken(this.position.x, this.position.y, this.position.z);
         }
+    }
 
+    generatePerlinNoise(x, z) {
+        // Simulation simple de bruit de Perlin
+        return {
+            x: Math.sin(x * 0.1) * Math.cos(z * 0.1),
+            z: Math.cos(x * 0.1) * Math.sin(z * 0.1)
+        };
     }
 
     addToPathTaken(x,y,z){
@@ -223,15 +244,15 @@ export default class Ant{
     updatePheromones(scene) {
         const currentTime = Date.now();
         
-        // Dépôt de phéromones périodique
         if (currentTime - this.lastPheromoneTime > antSettings.pheromoneInterval) {
-            const pheromone = new Pheromone(this.position);
+            // Dépôt de phéromones selon le type
+            const pheromoneType = this.eat ? 'return' : 'food';
+            const pheromone = new Pheromone(this.position, pheromoneType);
             pheromone.createParticleSystem(scene);
             this.pheromones.push(pheromone);
             this.lastPheromoneTime = currentTime;
         }
 
-        // Mise à jour et nettoyage des phéromones
         this.pheromones = this.pheromones.filter(pheromone => {
             const isAlive = pheromone.update();
             if (!isAlive) {
@@ -241,4 +262,30 @@ export default class Ant{
         });
     }
 
+    findNearbyAnts(ants) {
+        return ants.filter(ant => {
+            if (ant === this) return false;
+            return this.distance(ant.position.x, ant.position.y, ant.position.z) < antSettings.communicationRadius;
+        });
+    }
+
+    communicateWithOtherAnts(ants) {
+        if (!this.eat) return; // Seules les fourmis qui ont trouvé de la nourriture communiquent
+
+        for (const otherAnt of ants) {
+            if (otherAnt === this || otherAnt.eat) continue;
+
+            const distance = this.distance(otherAnt.position.x, otherAnt.position.y, otherAnt.position.z);
+            if (distance < antSettings.communicationRadius) {
+                // Si l'autre fourmi est proche, elle suit la direction vers la nourriture
+                if (this.foodEaten) {
+                    otherAnt.targetDirection = {
+                        x: this.foodEaten.position.x,
+                        y: this.foodEaten.position.y,
+                        z: this.foodEaten.position.z
+                    };
+                }
+            }
+        }
+    }
 }
