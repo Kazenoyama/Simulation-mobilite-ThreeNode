@@ -56,8 +56,10 @@ fw.addButtonToNavbar("Wander", changeMethode);
 
 var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
 fw.addDropdownToNavbar("Speed", dropdownList);
-fw.addDropdownToNavbar("Distance", [{ text: "More Distance", onClick: () => changeDistancePlus() }, { text: "Less Distance", onClick: () => changeDistanceMinus() }]);
-
+fw.addDropdownToNavbar("Distance", [
+    { text: "More Distance", onClick: () => zoomOut() }, // Appelle zoomOut
+    { text: "Less Distance", onClick: () => zoomIn() }   // Appelle zoomIn
+]);
 // Créer le bouton d'aide séparé
 const helpButton = document.createElement('button');
 helpButton.textContent = "❓";
@@ -136,8 +138,6 @@ helpButton.onclick = () => {
 document.body.appendChild(helpButton);
 
 // Ajouter les boutons de zoom et de caméra
-fw.addButtonToNavbar("➕", zoomIn);
-fw.addButtonToNavbar("➖", zoomOut);
 fw.addButtonToNavbar("👁️", toggleCameraMode);
 
 /* --------------------------------------------- */
