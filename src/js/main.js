@@ -55,8 +55,10 @@ fw.addButtonToNavbar("Draw", changeToDraw);
 fw.addButtonToNavbar("Wander", changeMethode);
 
 var dropdownList = [{ text: "More Speed", onClick: () => changeSpeedPlus() }, { text: "Less Speed", onClick: () => changeSpeedMinus() }];
-fw.addDropdownToNavbar("Speed", dropdownList);
-fw.addDropdownToNavbar("Distance", [
+fw.addDropdownToNavbar("Speed", [
+    { text: "More Speed", onClick: () => changeSpeedPlus() },
+    { text: "Less Speed", onClick: () => changeSpeedMinus() }
+]);fw.addDropdownToNavbar("Distance", [
     { text: "More Distance", onClick: () => zoomOut() }, // Appelle zoomOut
     { text: "Less Distance", onClick: () => zoomIn() }   // Appelle zoomIn
 ]);
@@ -400,13 +402,24 @@ async function onTouchWander(event){
 }
 
 /* ----------------------------------- */
+let lastTime = 0; // Temps précédent pour calculer le delta
 
-function animate() {
+function animate(currentTime) {
     requestAnimationFrame(animate);
-    if(loop != undefined){
-        if(!loop.stop){loop.launchLoop(scene);}
-        
+
+    // Calculer le delta time (temps écoulé depuis la dernière frame)
+    const deltaTime = (currentTime - lastTime) / 1000; // Convertir en secondes
+    lastTime = currentTime;
+
+    // Ajuster la vitesse de la simulation
+    const adjustedDeltaTime = deltaTime * simulationSpeed;
+
+    if (loop != undefined) {
+        if (!loop.stop) {
+            loop.launchLoop(scene, adjustedDeltaTime); // Passez le delta ajusté si nécessaire
+        }
     }
+
     renderer.render(scene, activeCamera);
 }
 
@@ -451,6 +464,21 @@ export function zoomOut() {
             fixCamera.lookAt(0, 0, 0);
         }
     }
+}
+
+let simulationSpeed = 1; // Vitesse initiale de la simulation
+
+export function changeSpeedPlus() {
+    antSettings.speed += 0.2; // Augmente la vitesse
+    console.log(`Increased speed: ${antSettings.speed}`);
+}
+
+export function changeSpeedMinus() {
+    antSettings.speed -= 0.2; // Diminue la vitesse
+    if (antSettings.speed < 0.2) {
+        antSettings.speed = 0.2; // Empêche une vitesse négative
+    }
+    console.log(`Decreased speed: ${antSettings.speed}`);
 }
 
 animate();
