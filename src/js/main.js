@@ -16,7 +16,29 @@ const camera = fw.mainParameters.camera;
 
 fw.onResize(renderer, window, camera);
 
-const textures = ["./src/textures/wood_floor.jpg", "./src/textures/wall.jpg", "./src/textures/roof.jpg"];
+// Définir les différents décors disponibles
+const decors = [
+    {
+        name: "Classique",
+        textures: ["./src/textures/wood_floor.jpg", "./src/textures/wall.jpg", "./src/textures/roof.jpg"]
+    },
+    {
+        name: "Nature",
+        textures: ["./src/textures/decor2/floor2.jpg", "./src/textures/decor2/wall2.jpg", "./src/textures/roof.jpg"]
+    }
+];
+
+// Fonction pour changer de décor
+function changeDecor(decorIndex) {
+    const selectedDecor = decors[decorIndex];
+    localStorage.setItem('selectedDecor', decorIndex);
+    location.reload();
+}
+
+// Au démarrage, vérifier si un décor est sélectionné
+let currentDecor = localStorage.getItem('selectedDecor') || 0;
+const textures = decors[currentDecor].textures;
+
 const table = fw.addScene(textures, fw, {width : 50, depth : 50})
 
 const fixCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Create a camera
@@ -62,6 +84,13 @@ fw.addDropdownToNavbar("Speed", [
     { text: "More Distance", onClick: () => zoomOut() }, // Appelle zoomOut
     { text: "Less Distance", onClick: () => zoomIn() }   // Appelle zoomIn
 ]);
+
+// Ajouter le menu déroulant pour les décors dans la navbar
+fw.addDropdownToNavbar("Décor", decors.map((decor, index) => ({
+    text: decor.name,
+    onClick: () => changeDecor(index)
+})));
+
 // Créer le bouton d'aide séparé
 const helpButton = document.createElement('button');
 helpButton.textContent = "❓";
@@ -480,6 +509,18 @@ export function changeSpeedMinus() {
     }
     console.log(`Decreased speed: ${antSettings.speed}`);
 }
+
+/*export function changeDistanceMinus () {
+    antSettings.distance -= 0.2; // Diminue la distance
+    if (antSettings.distance < 0.2) {
+        antSettings.distance = 0.2; // Empêche une distance négative
+    }
+    console.log(`Decreased distance: ${antSettings.distance}`);
+}
+export function changeDistancePlus() {
+    antSettings.distance += 0.2; // Augmente la distance
+    console.log(`Increased distance: ${antSettings.distance}`);
+}*/
 
 animate();
 
